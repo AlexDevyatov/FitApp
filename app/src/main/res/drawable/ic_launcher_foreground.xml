@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Простой вектор: тарелка с едой (круг + долька). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- тарелка -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,32 C66.15,32 76,41.85 76,54 C76,66.15 66.15,76 54,76 C41.85,76 32,66.15 32,54 C32,41.85 41.85,32 54,32 Z" />
+    <!-- еда -->
+    <path
+        android:fillColor="#8BC34A"
+        android:pathData="M54,42 C60.63,42 66,47.37 66,54 C66,60.63 60.63,66 54,66 C47.37,66 42,60.63 42,54 C42,47.37 47.37,42 54,42 Z" />
+    <!-- листик -->
+    <path
+        android:fillColor="#1B5E20"
+        android:pathData="M54,36 C58,30 64,28 68,28 C68,32 66,38 60,40 C57,41 55,40 54,36 Z" />
+</vector>

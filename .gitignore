@@ -1,0 +1,13 @@
+.env
+.env.*
+*.env
+local.properties
+secrets.properties
+*.keystore
+*.jks
+build/
+.gradle/
+.idea/
+*.iml
+captures/
+.cxx/

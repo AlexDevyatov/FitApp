@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">FitApp</string>
+
+    <!-- Статусы карточек -->
+    <string name="status_pending">Ожидает</string>
+    <string name="status_running">Обрабатывается…</string>
+    <string name="status_done">Готово</string>
+    <string name="status_failed">Ошибка</string>
+    <string name="status_auth_error">Проблема с ключом</string>
+    <string name="status_not_food">Не еда</string>
+
+    <!-- Вердикты отчёта -->
+    <string name="verdict_likely_deficit">скорее дефицит</string>
+    <string name="verdict_likely_excess">скорее перебор</string>
+    <string name="verdict_within_uncertainty">в пределах неопределённости</string>
+    <string name="verdict_below_target">ниже цели</string>
+    <string name="verdict_above_target">выше цели</string>
+    <string name="verdict_undetermined">не определить</string>
+    <string name="report_little_data">мало данных</string>
+
+    <!-- Отчёт (уведомления) -->
+    <string name="report_channel_name">Отчёты за день</string>
+    <string name="report_channel_description">Вечернее уведомление о готовом отчёте за день</string>
+    <string name="report_notification_title">Отчёт за день готов</string>
+    <string name="report_notification_text">Посмотрите, как прошёл день по калориям и составу.</string>
+
+    <!-- Ошибки -->
+    <string name="error_no_api_key">API-ключ не сохранён. Откройте настройки и добавьте ключ.</string>
+    <string name="error_auth">Ключ неверен или просрочен. Проверьте его в настройках.</string>
+    <string name="error_tls">Не удалось проверить сертификат сервера. На устройстве не установлен доверенный CA-сертификат провайдера.</string>
+    <string name="error_bad_request">Провайдер отклонил запрос: %1$s</string>
+    <string name="error_truncated">Модель не успела закончить ответ (лимит токенов). Попробуйте снять кадр ещё раз крупнее и проще.</string>
+    <string name="error_network">Сеть недоступна или провайдер не ответил. Попробуем позже автоматически.</string>
+    <string name="error_attempts_exhausted">Не удалось обработать снимок после 5 попыток.</string>
+    <string name="error_photo_missing">Файл снимка не найден.</string>
+    <string name="error_parse">Ответ модели не соответствует схеме разбора.</string>
+
+    <!-- Онбординг / цель -->
+    <string name="goal_raised_to_safety_floor">Цель поднята до безопасного порога калорий: ниже опускаться нельзя.</string>
+
+    <!-- Общие действия -->
+    <string name="action_back">Назад</string>
+    <string name="action_cancel">Отмена</string>
+    <string name="action_save">Сохранить</string>
+    <string name="action_delete">Удалить</string>
+    <string name="action_close">Закрыть</string>
+    <string name="action_retry">Повторить</string>
+    <string name="loading">Загрузка…</string>
+
+    <!-- Нижняя навигация -->
+    <string name="nav_today">Сегодня</string>
+    <string name="nav_calendar">Календарь</string>
+    <string name="nav_settings">Настройки</string>
+
+    <!-- Онбординг: ключ -->
+    <string name="key_title_onboarding">API-ключ</string>
+    <string name="key_title_settings">API-ключ</string>
+    <string name="key_caption">FitApp разбирает фотографии еды через сервис провайдера по вашему личному ключу. Введите ключ — без него приложение не пустит дальше никто, данные хранятся только на устройстве.</string>
+    <string name="key_field_label">Вставьте API-ключ</string>
+    <string name="key_paste">Вставить из буфера</string>
+    <string name="key_import_file">Импорт из файла</string>
+    <string name="key_check">Проверить</string>
+    <string name="key_checking">Проверяем ключ…</string>
+    <string name="key_valid">Ключ верен: модель qwen4-max доступна.</string>
+    <string name="key_saved">Ключ сохранён.</string>
+    <string name="key_cleared">Ключ удалён.</string>
+    <string name="key_error_empty">Введите ключ вручную или вставьте из буфера обмена.</string>
+    <string name="key_error_invalid">Ключ неверен или просрочен: %1$s</string>
+    <string name="key_error_model_missing">Ключ принят провайдером, но модель qwen4-max в вашу подписку не входит. Проверьте тариф у провайдера.</string>
+    <string name="key_error_tls">Не удалось проверить сертификат сервера (%1$s). На устройстве не установлен доверенный CA-сертификат провайдера — без него разбор фото работать не будет.</string>
+    <string name="key_error_network">Провайдер недоступен (%1$s). Проверьте подключение к сети и попробуйте ещё раз.</string>
+    <string name="key_import_failed">Не удалось прочитать файл с ключом.</string>
+    <string name="key_imported_from_file">Ключ загружен из файла. Нажмите «Проверить».</string>
+    <string name="key_clipboard_empty">Буфер обмена пуст.</string>
+    <string name="cd_key_visibility">Показать или скрыть ключ</string>
+
+    <!-- Онбординг: анкета / цели -->
+    <string name="profile_title_onboarding">Анкета</string>
+    <string name="profile_title_edit">Цели</string>
+    <string name="profile_caption">По вашим данным посчитаем цель по калориям с дефицитом 15–20% — это темп снижения веса, который считается безопасным.</string>
+    <string name="profile_sex">Пол</string>
+    <string name="profile_sex_male">Мужской</string>
+    <string name="profile_sex_female">Женский</string>
+    <string name="profile_age">Возраст</string>
+    <string name="profile_height">Рост, см</string>
+    <string name="profile_weight">Вес, кг</string>
+    <string name="profile_activity">Активность</string>
+    <string name="profile_activity_low">Низкая — сидячая работа, без спорта</string>
+    <string name="profile_activity_light">Лёгкая — тренировки 1–3 раза в неделю</string>
+    <string name="profile_activity_moderate">Средняя — тренировки 3–5 раз в неделю</string>
+    <string name="profile_activity_high">Высокая — тренировки 5 и более раз в неделю</string>
+    <string name="profile_deficit_title">Дефицит калорий: %1$d%%</string>
+    <string name="profile_deficit_caption">Больше дефицит — быстрее снижение, но темп выше 20% не рекомендуется.</string>
+    <string name="profile_goal_title">Ваша цель</string>
+    <string name="profile_goal_kcal">%1$d ккал в день</string>
+    <string name="profile_goal_macros">Белок %1$d г · Жиры %2$d г · Углеводы %3$d г</string>
+    <string name="profile_save_onboarding">Сохранить и продолжить</string>
+    <string name="profile_validation">Проверьте данные: возраст 14–100 лет, рост 100–250 см, вес 30–400 кг.</string>
+    <string name="profile_goal_preview_hint">Цель появится, когда все поля заполнены.</string>
+
+    <!-- Сегодня / День -->
+    <string name="today_title">Сегодня</string>
+    <string name="day_report_action">Отчёт</string>
+    <string name="day_gallery">Из галереи</string>
+    <string name="day_capture">Снять</string>
+    <string name="day_empty_title">Пока ничего не записано</string>
+    <string name="day_empty_hint">Нажмите кнопку камеры и сфотографируйте блюдо — вся тарелка должна быть в кадре. Или выберите готовое фото из галереи.</string>
+    <string name="day_empty_hint_past">За этот день карточек нет.</string>
+    <string name="day_items_more">+%1$d ещё</string>
+    <string name="day_import_failed">Не удалось прочитать выбранное фото.</string>
+    <string name="day_kind_dish">Блюдо</string>
+    <string name="day_kind_plate">Тарелка</string>
+    <string name="day_kind_label">Этикетка</string>
+    <string name="cd_meal_photo">Фото приёма пищи</string>
+    <string name="cd_open_meal">Открыть карточку</string>
+
+    <!-- Съёмка -->
+    <string name="capture_title">Съёмка</string>
+    <string name="capture_hint">Вся тарелка — в кадре</string>
+    <string name="capture_shoot">Снять</string>
+    <string name="capture_permission_title">Нужна камера</string>
+    <string name="capture_permission_text">Чтобы фотографировать еду, приложению нужен доступ к камере. Разрешите его в появившемся окне или включите позже в настройках системы.</string>
+    <string name="capture_permission_grant">Разрешить</string>
+    <string name="capture_failed">Не удалось сделать снимок. Попробуйте ещё раз.</string>
+    <string name="capture_no_camera">Камера недоступна на этом устройстве. Воспользуйтесь кнопкой «Из галереи» на экране дня.</string>
+
+    <!-- Карточка (meal) -->
+    <string name="meal_title">Карточка</string>
+    <string name="meal_delete_card">Удалить карточку</string>
+    <string name="meal_delete_confirm_title">Удалить карточку?</string>
+    <string name="meal_delete_confirm_text">Карточка вместе с фотографией и разбором будет удалена навсегда.</string>
+    <string name="meal_delete_item_title">Удалить компонент?</string>
+    <string name="meal_delete_item_text">«%1$s» будет удалён из карточки. Суммарные КБЖУ пересчитаются.</string>
+    <string name="meal_kind">Тип кадра</string>
+    <string name="meal_kind_dish">Блюдо</string>
+    <string name="meal_kind_plate">Тарелка</string>
+    <string name="meal_kind_label">Этикетка</string>
+    <string name="meal_components">Компоненты</string>
+    <string name="meal_totals">Суммарные КБЖУ</string>
+    <string name="meal_kcal_value">%1$s ккал</string>
+    <string name="meal_macro_protein">Б %1$s г</string>
+    <string name="meal_macro_fat">Ж %1$s г</string>
+    <string name="meal_macro_carbs">У %1$s г</string>
+    <string name="meal_macro_fiber">Клетчатка %1$s г</string>
+    <string name="meal_macro_sugar">Сахар %1$s г</string>
+    <string name="meal_grams">≈%1$s г</string>
+    <string name="meal_ultra_processed">Ультрапереработанное</string>
+    <string name="meal_rename_title">Название компонента</string>
+    <string name="meal_rename_hint">Название</string>
+    <string name="meal_retry">Повторить обработку</string>
+    <string name="meal_auth_banner">Проблема с API-ключом: провайдер отверг запрос. Пока ключ не обновлён, разбор работать не будет.</string>
+    <string name="meal_auth_banner_action">Открыть настройки</string>
+    <string name="meal_not_food_banner">На фото не найдена еда. Если это ошибка — повторите обработку, иначе карточку можно удалить.</string>
+    <string name="meal_notes_title">Пометка модели</string>
+    <string name="meal_processing">Фото поставлено в очередь и разбирается моделью — обычно это занимает несколько десятков секунд.</string>
+    <string name="meal_confidence">Уверенность разбора: %1$d%%</string>
+    <string name="meal_not_found">Карточка не найдена.</string>
+    <string name="meal_readonly_hint">Цифры КБЖУ доступны только для чтения — исправить их нельзя, можно поменять тип кадра, названия или удалить лишнее.</string>
+    <string name="cd_rename">Переименовать</string>
+    <string name="cd_delete_item">Удалить компонент</string>
+
+    <!-- Отчёт дня -->
+    <string name="report_title">Отчёт за день</string>
+    <string name="report_little_data_banner">Мало данных: готовых карточек меньше трёх или часть снимков не обработана. Выводы приблизительные.</string>
+    <string name="report_block_energy">Энергия</string>
+    <string name="report_block_composition">Состав</string>
+    <string name="report_block_regimen">Режим</string>
+    <string name="report_kcal_range">%1$s–%2$s ккал</string>
+    <string name="report_target_kcal">Цель: %1$d ккал</string>
+    <string name="report_verdict">Вердикт: %1$s</string>
+    <string name="report_protein">Белок</string>
+    <string name="report_fat">Жиры</string>
+    <string name="report_carbs">Углеводы</string>
+    <string name="report_range_vs_target">%1$s–%2$s г · цель %3$d г · %4$s</string>
+    <string name="report_fiber_value">Клетчатка: %1$s–%2$s г</string>
+    <string name="report_sugar_value">Сахар: %1$s–%2$s г</string>
+    <string name="report_ultra_value">Ультрапереработанное: %1$d из %2$d компонентов</string>
+    <string name="report_meal_count">Приёмов пищи: %1$d</string>
+    <string name="report_last_intake">Последний приём: %1$s</string>
+    <string name="report_last_intake_none">Готовых карточек за день нет</string>
+    <string name="report_late_meals">Приёмы после 21:00: %1$d</string>
+    <string name="report_longest_gap">Самый длинный промежуток: %1$s</string>
+    <string name="report_gap_hours">%1$d ч %2$d мин</string>
+    <string name="report_gap_minutes">%1$d мин</string>
+    <string name="report_no_meals">За этот день нет ни одной готовой карточки — отчёт пустой.</string>
+    <string name="report_text_title">Кратко о дне</string>
+    <string name="report_text_refresh">Обновить текст</string>
+    <string name="report_text_loading">Готовим формулировки…</string>
+    <string name="report_no_targets">Цели не заданы. Заполните анкету в настройках, чтобы отчёт сравнивал день с целью.</string>
+
+    <!-- Календарь -->
+    <string name="calendar_title">Календарь</string>
+    <string name="calendar_legend_full">Полный день</string>
+    <string name="calendar_legend_little">Мало данных</string>
+    <string name="calendar_legend_empty">Нет данных</string>
+    <string name="calendar_trend_title">Калории по дням месяца</string>
+    <string name="calendar_trend_target">Цель: %1$d ккал в день</string>
+    <string name="calendar_trend_empty">В этом месяце данных пока нет.</string>
+    <string name="cd_prev_month">Предыдущий месяц</string>
+    <string name="cd_next_month">Следующий месяц</string>
+    <string-array name="weekday_short">
+        <item>Пн</item>
+        <item>Вт</item>
+        <item>Ср</item>
+        <item>Чт</item>
+        <item>Пт</item>
+        <item>Сб</item>
+        <item>Вс</item>
+    </string-array>
+
+    <!-- Настройки -->
+    <string name="settings_title">Настройки</string>
+    <string name="settings_section_key">API-ключ</string>
+    <string name="settings_key_saved">Ключ сохранён на устройстве</string>
+    <string name="settings_key_missing">Ключ не задан — разбор фото не работает</string>
+    <string name="settings_key_change">Изменить или проверить ключ</string>
+    <string name="settings_key_clear">Удалить ключ</string>
+    <string name="settings_key_clear_title">Удалить ключ?</string>
+    <string name="settings_key_clear_text">Разбор фотографий перестанет работать, пока не добавите новый ключ.</string>
+    <string name="settings_section_report">Вечерний отчёт</string>
+    <string name="settings_push_enabled">Уведомление с отчётом за день</string>
+    <string name="settings_push_time">Время уведомления: %1$02d:00</string>
+    <string name="settings_push_time_action">Изменить время</string>
+    <string name="settings_push_permission_denied">Разрешение на уведомления не выдано — вечерний отчёт не придёт, пока разрешение не включено в настройках системы.</string>
+    <string name="settings_section_goals">Цели</string>
+    <string name="settings_goals_value">%1$d ккал · Б %2$d · Ж %3$d · У %4$d</string>
+    <string name="settings_goals_missing">Анкета не заполнена</string>
+    <string name="settings_goals_edit">Изменить анкету</string>
+    <string name="settings_section_stats">Статистика теста</string>
+    <string name="settings_stats_open">Открыть</string>
+    <string name="settings_dialog_hour_title">Время уведомления</string>
+
+    <!-- Статистика теста -->
+    <string name="stats_title">Статистика теста</string>
+    <string name="stats_total_meals">Всего карточек: %1$d</string>
+    <string name="stats_edited_meals">Отредактировано: %1$d из %2$d (%3$d%%)</string>
+    <string name="stats_edited_meals_none">Отредактировано: 0 из %1$d</string>
+    <string name="stats_total_edits">Всего правок: %1$d</string>
+    <string name="stats_note">Эти данные хранятся только на устройстве и никуда не отправляются.</string>
+</resources>
