@@ -1,3 +1,9 @@
+// EncryptedSharedPreferences и MasterKey помечены deprecated в security-crypto 1.1.0-alpha07
+// (Jetpack Security свёрнут целиком). Замена — собственный AES-GCM поверх Android Keystore —
+// меняет формат хранения ключа, поэтому вынесена за границы MVP (§11 PLAN). До миграции
+// API остаётся рабочим: подавляем предупреждение осознанно, а не по недосмотру.
+@file:Suppress("DEPRECATION")
+
 package ru.fitapp.data.prefs
 
 import android.content.Context
