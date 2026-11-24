@@ -2,6 +2,7 @@ package ru.fitapp.ui.capture
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
@@ -58,14 +59,21 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import java.util.concurrent.Executors
 import ru.fitapp.R
+import ru.fitapp.core.LogTags
 import ru.fitapp.ui.capture.CaptureViewModel.CaptureState
 import ru.fitapp.ui.factoryOf
 import ru.fitapp.ui.fitApp
+
+/** Тег съёмки: сюда же пишут CaptureViewModel и MealCreator (tag `FitAppUI`/`FitAppPhoto`). */
+private const val TAG = LogTags.UI
 
 /**
  * Съёмка (§9): CameraX PreviewView в AndroidView, ImageCapture → JPEG,
  * подсказка «вся тарелка в кадре», runtime-разрешение CAMERA
  * (при отказе — объяснение и возврат). Без диалогов после снимка.
+ *
+ * Логи (tag `FitAppUI`): выдача разрешения, сбои камеры и привязки превью,
+ * ошибка takePicture с исключением, размер полученного кадра.
  */
 @Composable
 fun CaptureScreen(onBack: () -> Unit) {
@@ -86,10 +94,14 @@ fun CaptureScreen(onBack: () -> Unit) {
     ) { granted ->
         hasPermission = granted
         permissionRequested = true
+        Log.i(TAG, "camera: разрешение CAMERA granted=$granted")
     }
 
     LaunchedEffect(Unit) {
-        if (!hasPermission) permissionLauncher.launch(Manifest.permission.CAMERA)
+        if (!hasPermission) {
+            Log.i(TAG, "camera: запрашиваем разрешение CAMERA")
+            permissionLauncher.launch(Manifest.permission.CAMERA)
+        }
     }
     // Снимок сохранён и поставлен в очередь — сразу назад в ленту, без диалогов (§9).
     LaunchedEffect(state) {
@@ -118,7 +130,7 @@ fun CaptureScreen(onBack: () -> Unit) {
 private fun CameraUi(
     state: CaptureState,
     onJpeg: (ByteArray) -> Unit,
-    onCaptureError: () -> Unit,
+    onCaptureError: (Throwable?) -> Unit,
     onBack: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -141,12 +153,15 @@ private fun CameraUi(
         val owner = lifecycleOwner
         if (owner == null) {
             cameraError = true
+            Log.e(TAG, "camera: контекст не LifecycleOwner — превью не запустить")
             return@LaunchedEffect
         }
         val future = ProcessCameraProvider.getInstance(context)
         future.addListener(
             {
-                val provider = runCatching { future.get() }.getOrNull()
+                val provider = runCatching { future.get() }
+                    .onFailure { Log.e(TAG, "camera: ProcessCameraProvider недоступен", it) }
+                    .getOrNull()
                 if (provider == null) {
                     cameraError = true
                     return@addListener
@@ -161,8 +176,13 @@ private fun CameraUi(
                         preview,
                         imageCapture,
                     )
-                }.onSuccess { cameraError = false }
-                    .onFailure { cameraError = true }
+                }.onSuccess {
+                    cameraError = false
+                    Log.i(TAG, "camera: превью привязано к жизненному циклу")
+                }.onFailure {
+                    cameraError = true
+                    Log.e(TAG, "camera: не удалось привязать превью и захват", it)
+                }
             },
             ContextCompat.getMainExecutor(context),
         )
@@ -178,11 +198,13 @@ private fun CameraUi(
                     val bytes = ByteArray(buffer.remaining())
                     buffer.get(bytes)
                     image.close()
+                    Log.i(TAG, "camera: кадр снят bytes=${bytes.size}")
                     onJpeg(bytes)
                 }
 
                 override fun onError(exception: ImageCaptureException) {
-                    onCaptureError()
+                    Log.e(TAG, "camera: takePicture не удался", exception)
+                    onCaptureError(exception)
                 }
             },
         )

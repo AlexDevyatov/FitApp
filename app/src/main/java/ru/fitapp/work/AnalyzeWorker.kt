@@ -4,10 +4,12 @@ import android.content.Context
 import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import ru.fitapp.FitAppApplication
+import ru.fitapp.core.LogTags
 import ru.fitapp.data.MealRepository
 import ru.fitapp.data.db.MealStatus
 import ru.fitapp.domain.AnalyzeOutcome
@@ -15,20 +17,57 @@ import ru.fitapp.domain.AnalyzeOutcome
 /**
  * Обработка одного снимка (§10 PLAN): meal(PENDING) → QwenAnalyzer → DONE/NOT_FOOD/FAILED/AUTH_ERROR
  * либо Result.retry() для Retryable. Backoff exponential 30s задаётся при enqueue (MealProcessor).
+ *
+ * Логи (tag `FitAppWorker`): старт и остановка работы, попытки, ожидание слота семафора,
+ * исход разбора и любое исключение. Связываются с логами снимка по mealId.
  */
 class AnalyzeWorker(
     context: Context,
     params: WorkerParameters,
 ) : CoroutineWorker(context, params) {
 
-    override suspend fun doWork(): Result = semaphore.withPermit { run() }
+    override suspend fun doWork(): Result {
+        Log.i(
+            TAG,
+            "work id=$id: старт run_attempt=$runAttemptCount meal=${inputData.getString(KEY_MEAL_ID)}",
+        )
+        return semaphore.withPermit {
+            try {
+                run()
+            } catch (e: CancellationException) {
+                // Система остановила работу (отмена, лимит времени): карточка может остаться в RUNNING.
+                Log.w(
+                    TAG,
+                    "work id=$id: работа отменена meal=${inputData.getString(KEY_MEAL_ID)}",
+                )
+                throw e
+            } catch (e: Exception) {
+                // Поведение прежнее (исключение уходит в WorkManager), но инцидент виден в logcat.
+                Log.e(
+                    TAG,
+                    "work id=$id: разбор упал с исключением meal=${inputData.getString(KEY_MEAL_ID)}",
+                    e,
+                )
+                throw e
+            }
+        }
+    }
 
     private suspend fun run(): Result {
-        val mealId = inputData.getString(KEY_MEAL_ID) ?: return Result.failure()
-        val app = applicationContext as? FitAppApplication ?: return Result.failure()
+        val mealId = inputData.getString(KEY_MEAL_ID)
+        if (mealId == null) {
+            Log.e(TAG, "work id=$id: во входных данных нет $KEY_MEAL_ID")
+            return Result.failure()
+        }
+        val app = applicationContext as? FitAppApplication
+        if (app == null) {
+            Log.e(TAG, "work id=$id: applicationContext не FitAppApplication")
+            return Result.failure()
+        }
         val repo: MealRepository = app.mealRepository
 
-        val meal = repo.getMeal(mealId) ?: run {
+        val meal = repo.getMeal(mealId)
+        if (meal == null) {
             Log.w(TAG, "meal=$mealId: карточки нет в базе, работа завершена")
             return Result.failure()
         }
@@ -117,7 +156,7 @@ class AnalyzeWorker(
     }
 
     companion object {
-        private const val TAG = "FitAppWorker"
+        private const val TAG = LogTags.WORKER
 
         const val KEY_MEAL_ID = "mealId"
         const val MAX_ATTEMPTS = 5

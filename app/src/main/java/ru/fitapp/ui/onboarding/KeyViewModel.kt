@@ -2,6 +2,7 @@ package ru.fitapp.ui.onboarding
 
 import android.app.Application
 import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
@@ -13,6 +14,7 @@ import kotlinx.coroutines.withContext
 import ru.fitapp.FitAppApplication
 import ru.fitapp.R
 import ru.fitapp.ai.KeyProbeResult
+import ru.fitapp.core.LogTags
 
 /** Исход проверки ключа в терминах UI (сообщения собираются из ресурсов). */
 sealed interface KeyCheckUiResult {
@@ -68,6 +70,7 @@ class KeyViewModel(app: Application) : AndroidViewModel(app) {
 
     fun pasteFromClipboard(clipboardText: String?) {
         if (clipboardText.isNullOrBlank()) {
+            Log.w(TAG, "key: буфер обмена пуст, вставка отменена")
             _message.value = fitApp.getString(R.string.key_clipboard_empty)
             return
         }
@@ -79,11 +82,15 @@ class KeyViewModel(app: Application) : AndroidViewModel(app) {
             val text = withContext(Dispatchers.IO) {
                 runCatching {
                     fitApp.contentResolver.openInputStream(uri)?.use { it.readBytes().decodeToString().trim() }
+                }.onFailure {
+                    Log.e(TAG, "key: файл с ключом не прочитан uri=$uri", it)
                 }.getOrNull()
             }
             if (text.isNullOrBlank()) {
+                Log.w(TAG, "key: файл пуст или не прочитан uri=$uri")
                 _message.value = fitApp.getString(R.string.key_import_failed)
             } else {
+                Log.i(TAG, "key: ключ импортирован из файла uri=$uri")
                 _keyText.value = text
                 _result.value = null
                 _message.value = fitApp.getString(R.string.key_imported_from_file)
@@ -94,16 +101,21 @@ class KeyViewModel(app: Application) : AndroidViewModel(app) {
     fun check() {
         val key = _keyText.value.trim()
         if (key.isEmpty()) {
+            Log.w(TAG, "check: поле ключа пустое, проверка не запущена")
             _result.value = KeyCheckUiResult.EmptyField
             return
         }
         viewModelScope.launch {
             _checking.value = true
             _result.value = null
+            Log.i(TAG, "check: старт проверки ключа (значение не логируется)")
             withContext(Dispatchers.IO) { fitApp.keyStore.save(key) }
             val probe = fitApp.analyzer.probeKeyDetailed()
             if (probe !is KeyProbeResult.Valid) {
+                Log.w(TAG, "check: проверка не прошла ($probe), ключ удалён из хранилища")
                 withContext(Dispatchers.IO) { fitApp.keyStore.clear() }
+            } else {
+                Log.i(TAG, "check: ключ принят провайдером")
             }
             _result.value = when (probe) {
                 is KeyProbeResult.Valid -> KeyCheckUiResult.Valid
@@ -114,5 +126,9 @@ class KeyViewModel(app: Application) : AndroidViewModel(app) {
             }
             _checking.value = false
         }
+    }
+
+    private companion object {
+        const val TAG = LogTags.KEY
     }
 }

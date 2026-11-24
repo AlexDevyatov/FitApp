@@ -1,6 +1,7 @@
 package ru.fitapp.ui.settings
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
@@ -11,6 +12,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import ru.fitapp.FitAppApplication
+import ru.fitapp.core.LogTags
 import ru.fitapp.data.MealStats
 import ru.fitapp.domain.DailyTargets
 import ru.fitapp.work.EveningReportScheduler
@@ -51,6 +53,7 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
 
     fun clearKey() {
         viewModelScope.launch(Dispatchers.IO) {
+            Log.i(TAG, "settings: пользователь удаляет API-ключ")
             fitApp.keyStore.clear()
             _hasKey.value = false
         }
@@ -59,6 +62,7 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
     /** Включение/выключение пуша с перепланированием PeriodicWork (§3, §10). */
     fun setPushEnabled(enabled: Boolean) {
         viewModelScope.launch {
+            Log.i(TAG, "settings: пользователь меняет пуш enabled=$enabled")
             fitApp.settingsStore.setPushEnabled(enabled)
             EveningReportScheduler.reschedule(getApplication())
         }
@@ -66,8 +70,13 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
 
     fun setPushHour(hour: Int) {
         viewModelScope.launch {
+            Log.i(TAG, "settings: пользователь меняет час пуша hour=$hour")
             fitApp.settingsStore.setPushHour(hour)
             EveningReportScheduler.reschedule(getApplication())
         }
+    }
+
+    private companion object {
+        const val TAG = LogTags.UI
     }
 }

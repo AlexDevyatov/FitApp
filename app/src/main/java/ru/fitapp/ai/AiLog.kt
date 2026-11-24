@@ -6,6 +6,8 @@ import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import ru.fitapp.core.LogTags
+import ru.fitapp.core.logExcerpt
 import ru.fitapp.domain.AnalyzeOutcome
 
 /**
@@ -35,7 +37,7 @@ internal data class CompletionStats(
  */
 internal object AiLog {
 
-    const val TAG = "FitAppAI"
+    const val TAG = LogTags.AI
 
     /** Длина выдержки из ответа модели: хватает, чтобы увидеть место обрыва. */
     private const val EXCERPT_LIMIT = 240
@@ -79,10 +81,7 @@ internal object AiLog {
     }
 
     /** Одна строка без переносов: ответ модели иначе растягивается на экраны logcat. */
-    fun excerpt(text: String): String {
-        val oneLine = text.replace('\n', ' ').replace('\r', ' ').trim()
-        return if (oneLine.length <= EXCERPT_LIMIT) oneLine else oneLine.take(EXCERPT_LIMIT) + "…"
-    }
+    fun excerpt(text: String): String = logExcerpt(text, EXCERPT_LIMIT)
 }
 
 /** Достаёт finish_reason и usage; отсутствующие/битые поля дают null, а не исключение. */

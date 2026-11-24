@@ -1,6 +1,7 @@
 package ru.fitapp.ui
 
 import androidx.compose.runtime.Composable
+import android.util.Log
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
@@ -9,6 +10,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import java.time.LocalDate
+import ru.fitapp.core.LogTags
 import ru.fitapp.ui.calendar.CalendarScreen
 import ru.fitapp.ui.capture.CaptureScreen
 import ru.fitapp.ui.day.DayScreen
@@ -138,8 +140,7 @@ fun FitAppNavHost(startOnboarding: Boolean) {
             route = Routes.DAY,
             arguments = listOf(navArgument("date") { type = NavType.StringType }),
         ) { entry ->
-            val date = runCatching { LocalDate.parse(entry.arguments?.getString("date").orEmpty()) }
-                .getOrDefault(LocalDate.now())
+            val date = parseRouteDate(entry.arguments?.getString("date"))
             DayScreen(
                 date = date,
                 isToday = false,
@@ -156,8 +157,7 @@ fun FitAppNavHost(startOnboarding: Boolean) {
             route = Routes.REPORT,
             arguments = listOf(navArgument("date") { type = NavType.StringType }),
         ) { entry ->
-            val date = runCatching { LocalDate.parse(entry.arguments?.getString("date").orEmpty()) }
-                .getOrDefault(LocalDate.now())
+            val date = parseRouteDate(entry.arguments?.getString("date"))
             ReportScreen(date = date, onBack = { navController.popBackStack() })
         }
     }
@@ -171,3 +171,10 @@ fun navigateToTab(navController: NavController, route: String) {
         restoreState = true
     }
 }
+
+/** Дата из аргумента маршрута; при мусоре открывается сегодняшний день — это стоит видеть в логе. */
+private fun parseRouteDate(raw: String?): LocalDate =
+    runCatching { LocalDate.parse(raw.orEmpty()) }.getOrElse {
+        Log.w(LogTags.UI, "nav: дата маршрута не разобрана «$raw», открыт сегодняшний день")
+        LocalDate.now()
+    }

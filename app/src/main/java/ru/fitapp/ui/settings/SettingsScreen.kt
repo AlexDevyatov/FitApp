@@ -2,6 +2,7 @@ package ru.fitapp.ui.settings
 
 import android.Manifest
 import android.os.Build
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
@@ -48,11 +49,15 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import ru.fitapp.R
+import ru.fitapp.core.LogTags
 import ru.fitapp.ui.FitAppBottomBar
 import ru.fitapp.ui.Routes
 import ru.fitapp.ui.common.SectionCard
 import ru.fitapp.ui.factoryOf
 import ru.fitapp.ui.fitApp
+
+/** Тег уведомлений: решение пользователя по POST_NOTIFICATIONS. */
+private const val TAG = LogTags.PUSH
 
 /**
  * Настройки (§9): смена/проверка/очистка ключа, вечерний пуш + время
@@ -79,6 +84,11 @@ fun SettingsScreen(navController: NavController) {
         ActivityResultContracts.RequestPermission(),
     ) { granted ->
         notificationDenied = !granted
+        Log.i(TAG, "push: пользователь ответил на запрос POST_NOTIFICATIONS granted=$granted")
+        if (!granted) {
+            // Флаг пуша всё равно включается: система не даст показать уведомление.
+            Log.w(TAG, "push: уведомления запрещены системой — вечерний отчёт не покажется")
+        }
         vm.setPushEnabled(true)
     }
 

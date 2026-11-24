@@ -1,6 +1,7 @@
 package ru.fitapp.ui.onboarding
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlin.math.roundToInt
@@ -10,6 +11,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import ru.fitapp.FitAppApplication
+import ru.fitapp.core.LogTags
 import ru.fitapp.data.ProfileRepository.Companion.activityEnum
 import ru.fitapp.domain.Activity
 import ru.fitapp.domain.Sex
@@ -42,22 +44,34 @@ class ProfileFormViewModel(app: Application) : AndroidViewModel(app) {
     init {
         viewModelScope.launch {
             val profile = fitApp.profileRepository.getProfile()
-            _state.update { current ->
-                if (profile == null) {
-                    current.copy(loaded = true)
-                } else {
-                    val filled = current.copy(
-                        sex = runCatching { Sex.valueOf(profile.sex) }.getOrDefault(Sex.FEMALE),
-                        age = profile.age.toString(),
-                        height = profile.heightCm.toString(),
-                        weight = trimNumber(profile.weightKg),
-                        activity = profile.activityEnum() ?: Activity.LIGHT,
-                        deficitPct = profile.deficitPct.coerceIn(Tdee.MIN_DEFICIT_PCT, Tdee.MAX_DEFICIT_PCT),
-                        loaded = true,
-                    )
-                    filled.copy(goals = computeGoals(filled))
-                }
+            if (profile == null) {
+                Log.i(TAG, "profile: анкета не заполнена, форма пустая")
+                _state.update { it.copy(loaded = true) }
+                return@launch
             }
+            val sex = runCatching { Sex.valueOf(profile.sex) }.getOrElse {
+                Log.w(TAG, "profile: пол в базе не распознан (${profile.sex}), используется FEMALE")
+                Sex.FEMALE
+            }
+            val activity = profile.activityEnum() ?: Activity.LIGHT.also {
+                Log.w(TAG, "profile: активность ${profile.activity} не совпала с коэффициентами, взят LIGHT")
+            }
+            val filled = FormState(
+                sex = sex,
+                age = profile.age.toString(),
+                height = profile.heightCm.toString(),
+                weight = trimNumber(profile.weightKg),
+                activity = activity,
+                deficitPct = profile.deficitPct.coerceIn(Tdee.MIN_DEFICIT_PCT, Tdee.MAX_DEFICIT_PCT),
+                loaded = true,
+            )
+            val withGoals = filled.copy(goals = computeGoals(filled))
+            Log.i(
+                TAG,
+                "profile: форма заполнена из анкеты deficit_pct=${filled.deficitPct} " +
+                    "goal_calculated=${withGoals.goals != null}",
+            )
+            _state.value = withGoals
         }
     }
 
@@ -76,11 +90,37 @@ class ProfileFormViewModel(app: Application) : AndroidViewModel(app) {
 
     fun save() {
         val form = _state.value
-        val goals = form.goals ?: return
-        val age = form.age.toIntOrNull() ?: return
-        val heightCm = form.height.replace(',', '.').toDoubleOrNull()?.roundToInt() ?: return
-        val weightKg = form.weight.replace(',', '.').toDoubleOrNull() ?: return
+        val goals = form.goals
+        if (goals == null) {
+            // Кнопка «Сохранить» не сработала молча — основная жалоба на этом экране.
+            Log.w(
+                TAG,
+                "profile: сохранение отклонено — цель не рассчитана (age=${form.age} " +
+                    "height=${form.height} weight=${form.weight} activity=${form.activity})",
+            )
+            return
+        }
+        val age = form.age.toIntOrNull()
+        if (age == null) {
+            Log.w(TAG, "profile: сохранение отклонено — возраст не число: «${form.age}»")
+            return
+        }
+        val heightCm = form.height.replace(',', '.').toDoubleOrNull()?.roundToInt()
+        if (heightCm == null) {
+            Log.w(TAG, "profile: сохранение отклонено — рост не число: «${form.height}»")
+            return
+        }
+        val weightKg = form.weight.replace(',', '.').toDoubleOrNull()
+        if (weightKg == null) {
+            Log.w(TAG, "profile: сохранение отклонено — вес не число: «${form.weight}»")
+            return
+        }
         viewModelScope.launch {
+            Log.i(
+                TAG,
+                "profile: сохранение анкеты age=$age height_cm=$heightCm weight_kg=$weightKg " +
+                    "sex=${form.sex.name} deficit_pct=${form.deficitPct}",
+            )
             fitApp.profileRepository.saveGoals(
                 goals = goals,
                 sex = form.sex,
@@ -93,6 +133,7 @@ class ProfileFormViewModel(app: Application) : AndroidViewModel(app) {
             // Онбординг завершается сохранением анкеты; в режиме правки флаг уже true.
             fitApp.settingsStore.setOnboardingCompleted(true)
             _state.update { it.copy(saved = true) }
+            Log.i(TAG, "profile: анкета сохранена, онбординг завершён")
         }
     }
 
@@ -128,6 +169,8 @@ class ProfileFormViewModel(app: Application) : AndroidViewModel(app) {
         if (value % 1.0 == 0.0) value.toInt().toString() else value.toString()
 
     private companion object {
+        const val TAG = LogTags.UI
+
         val AGE_RANGE = 14..100
         val HEIGHT_RANGE = 100.0..250.0
         val WEIGHT_RANGE = 30.0..400.0

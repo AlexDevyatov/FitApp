@@ -1,9 +1,12 @@
 package ru.fitapp
 
 import android.app.Application
+import android.os.Process
+import android.util.Log
 import ru.fitapp.ai.DishAnalyzer
 import ru.fitapp.ai.QwenAnalyzer
 import ru.fitapp.ai.ReportTextGenerator
+import ru.fitapp.core.LogTags
 import ru.fitapp.data.MealRepository
 import ru.fitapp.data.ProfileRepository
 import ru.fitapp.data.db.AppDatabase
@@ -16,6 +19,9 @@ import ru.fitapp.work.ReportNotifier
  * Ручная DI-композиция (§5 PLAN): все сервисы — ленивые singleton-ы.
  * MockAnalyzer подставляется только в тестах (инструментальный тест может
  * переопределить [analyzerOverride]).
+ *
+ * Логи (tag `FitAppApp`): запуск процесса, выбранная реализация анализатора
+ * и необработанные исключения — то, что иначе видно только как «приложение закрылось».
  */
 class FitAppApplication : Application() {
 
@@ -41,13 +47,38 @@ class FitAppApplication : Application() {
     var analyzerOverride: DishAnalyzer? = null
 
     val analyzer: DishAnalyzer by lazy {
-        analyzerOverride ?: QwenAnalyzer(apiKeyProvider)
+        val implementation = analyzerOverride ?: QwenAnalyzer(apiKeyProvider)
+        // Видно, если в сборку попал MockAnalyzer: модель тогда не вызывается вовсе.
+        Log.i(
+            LogTags.AI,
+            "analyzer: используется ${implementation::class.java.simpleName}, model=${QwenAnalyzer.MODEL}",
+        )
+        implementation
     }
 
     val reportTextGenerator: ReportTextGenerator by lazy { ReportTextGenerator(apiKeyProvider) }
 
     override fun onCreate() {
         super.onCreate()
+        installCrashLogger()
+        Log.i(LogTags.APP, "app: процесс запущен")
         ReportNotifier.ensureChannel(this)
+    }
+
+    /**
+     * Пишет необработанное исключение в logcat под тегом FitAppApp до того,
+     * как процесс будет убит. Поведение системы не меняется: обработчик
+     * по умолчанию вызывается следом.
+     */
+    private fun installCrashLogger() {
+        val previous = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
+            Log.e(LogTags.APP, "app: НЕОБРАБОТАННОЕ ИСКЛЮЧЕНИЕ thread=${thread.name}", throwable)
+            if (previous != null) {
+                previous.uncaughtException(thread, throwable)
+            } else {
+                Process.killProcess(Process.myPid())
+            }
+        }
     }
 }

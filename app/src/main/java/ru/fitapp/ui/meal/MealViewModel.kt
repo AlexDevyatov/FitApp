@@ -1,6 +1,7 @@
 package ru.fitapp.ui.meal
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
@@ -12,6 +13,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import ru.fitapp.FitAppApplication
+import ru.fitapp.core.LogTags
 import ru.fitapp.data.db.MealStatus
 import ru.fitapp.data.db.MealWithItems
 import ru.fitapp.domain.FrameKind
@@ -21,6 +23,9 @@ import ru.fitapp.work.MealProcessor
  * Карточка приёма пищи (§9): компоненты, правки (тип кадра, название, удаление),
  * повтор обработки при FAILED/AUTH_ERROR. Каждая правка пишет edit и помечает
  * meal.edited / day.hand_edited — это делает MealRepository.
+ *
+ * Логи (tag `FitAppUI`): отменённые действия, удаление и ручной повтор.
+ * Сами изменения карточки пишет MealRepository (tag `FitAppData`).
  */
 class MealViewModel(app: Application, private val mealId: String) : AndroidViewModel(app) {
 
@@ -38,7 +43,10 @@ class MealViewModel(app: Application, private val mealId: String) : AndroidViewM
 
     fun renameItem(itemId: String, newName: String) {
         val trimmed = newName.trim()
-        if (trimmed.isEmpty()) return
+        if (trimmed.isEmpty()) {
+            Log.w(TAG, "meal=$mealId item=$itemId: пустое название — правка отклонена")
+            return
+        }
         viewModelScope.launch { fitApp.mealRepository.renameItem(itemId, trimmed) }
     }
 
@@ -48,9 +56,11 @@ class MealViewModel(app: Application, private val mealId: String) : AndroidViewM
 
     fun deleteMeal() {
         viewModelScope.launch {
+            Log.i(TAG, "meal=$mealId: пользователь удаляет карточку")
             fitApp.mealRepository.deleteMeal(mealId)
             withContext(Dispatchers.IO) { fitApp.photoStore.delete(mealId) }
             _deleted.value = true
+            Log.i(TAG, "meal=$mealId: карточка удалена, экран закрывается")
         }
     }
 
@@ -61,8 +71,14 @@ class MealViewModel(app: Application, private val mealId: String) : AndroidViewM
      */
     fun retry() {
         viewModelScope.launch {
+            Log.i(TAG, "meal=$mealId: ручной повтор разбора пользователем")
             fitApp.mealRepository.setStatus(mealId, MealStatus.PENDING)
             MealProcessor.retryNow(fitApp, mealId, fitApp.mealRepository::resetAttempts)
+            Log.i(TAG, "meal=$mealId: повтор разбора поставлен в очередь")
         }
+    }
+
+    private companion object {
+        const val TAG = LogTags.UI
     }
 }
