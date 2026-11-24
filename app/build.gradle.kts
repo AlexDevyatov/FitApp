@@ -45,6 +45,12 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+
+    testOptions {
+        // AiLog/SystemClock — android.util.Log в JVM-тестах не реализован;
+        // заглушки возвращают дефолты вместо исключения.
+        unitTests.isReturnDefaultValues = true
+    }
 }
 
 dependencies {

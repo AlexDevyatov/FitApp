@@ -122,7 +122,7 @@ curl -sS -H "Authorization: Bearer $KEY" -H 'Content-Type: application/json' \
     ]
   }],
   "response_format": { "type": "json_schema", "json_schema": { "name": "frame", "strict": true, "schema": { "...": "§4.3" } } },
-  "max_tokens": 600
+  "max_tokens": 3000
 }
 ```
 
@@ -131,7 +131,8 @@ curl -sS -H "Authorization: Bearer $KEY" -H 'Content-Type: application/json' \
 - `content` обязан быть **массивом** частей: строка даёт `400 Input should be a valid list`;
 - допустимые типы частей: `text`, `input_audio`, `image_url`, `video_url`, `video`, `file` — всё остальное `400`;
 - в ответе есть `message.reasoning_content` — его нужно игнорировать, JSON лежит в `message.content`;
-- `finish_reason` бывает `stop` и, вероятно, `length` — при `length` JSON невалиден, это ошибка обработки, а не успех.
+- `finish_reason` бывает `stop` и `length` — при `length` JSON невалиден, это ошибка обработки, а не успех;
+- токены рассуждения входят в `max_tokens`: на кадре с пиццей `reasoning_tokens=426` при `completion_tokens=600`, и JSON обрывался на середине второго компонента. Поэтому бюджет — 3000, а `length` считается **retryable** (длина рассуждения плавает от запуска к запуску) и повторяется воркером, а не сразу падает в «Ошибку».
 
 ### 4.3. Схема ответа (strict)
 

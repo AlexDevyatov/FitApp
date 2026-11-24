@@ -1,6 +1,7 @@
 package ru.fitapp.work
 
 import android.content.Context
+import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import kotlinx.coroutines.delay
@@ -27,27 +28,39 @@ class AnalyzeWorker(
         val app = applicationContext as? FitAppApplication ?: return Result.failure()
         val repo: MealRepository = app.mealRepository
 
-        val meal = repo.getMeal(mealId) ?: return Result.failure()
+        val meal = repo.getMeal(mealId) ?: run {
+            Log.w(TAG, "meal=$mealId: карточки нет в базе, работа завершена")
+            return Result.failure()
+        }
         // Конечные статусы не перезапускаем (защита от повторного enqueue).
         if (meal.status == MealStatus.DONE ||
             meal.status == MealStatus.AUTH_ERROR ||
             meal.status == MealStatus.NOT_FOOD
         ) {
+            Log.i(TAG, "meal=$mealId: статус ${meal.status} конечный, разбор не нужен")
             return Result.success()
         }
 
         repo.setStatus(mealId, MealStatus.RUNNING)
         repo.incrementAttempts(mealId)
         val attempts = meal.attempts + 1
+        Log.i(TAG, "meal=$mealId: старт разбора, попытка $attempts из $MAX_ATTEMPTS")
 
         val jpeg = app.photoStore.read(mealId)
         if (jpeg == null) {
+            Log.e(TAG, "meal=$mealId: файл снимка не найден, разбор невозможен")
             repo.markFailed(mealId, "photo_missing", "Файл снимка не найден.")
             return Result.failure()
         }
+        Log.i(TAG, "meal=$mealId: снимок ${jpeg.size} байт прочитан")
 
         return when (val outcome = app.analyzer.analyze(jpeg)) {
             is AnalyzeOutcome.Ok -> {
+                Log.i(
+                    TAG,
+                    "meal=$mealId: готово, компонентов ${outcome.result.items.size}, " +
+                        "уверенность ${outcome.result.confidence}",
+                )
                 repo.saveAnalysis(
                     mealId = mealId,
                     kind = outcome.result.kind,
@@ -60,24 +73,28 @@ class AnalyzeWorker(
             }
 
             is AnalyzeOutcome.NotFood -> {
+                Log.i(TAG, "meal=$mealId: на фото не найдена еда")
                 repo.markNotFood(mealId, outcome.notes)
                 Result.success()
             }
 
             is AnalyzeOutcome.AuthError -> {
                 // §4.4: без ретраев, сразу видимый статус
+                Log.e(TAG, "meal=$mealId: проблема с ключом — ${outcome.message}")
                 repo.markAuthError(mealId, outcome.message)
                 Result.failure()
             }
 
             is AnalyzeOutcome.Permanent -> {
-                // 400 / битая схема / length / TLS — без ретраев (§4.4)
+                // 400 / битая схема / TLS — без ретраев (§4.4)
+                Log.e(TAG, "meal=$mealId: неисправимая ошибка — ${outcome.reason}")
                 repo.markFailed(mealId, "permanent", outcome.reason)
                 Result.failure()
             }
 
             is AnalyzeOutcome.Retryable -> {
                 if (attempts >= MAX_ATTEMPTS) {
+                    Log.w(TAG, "meal=$mealId: попытки исчерпаны ($attempts), последняя причина — ${outcome.reason}")
                     repo.markFailed(
                         mealId,
                         "attempts_exhausted",
@@ -89,8 +106,10 @@ class AnalyzeWorker(
                     // дальше — обычный экспоненциальный backoff WorkManager.
                     val retryAfter = outcome.retryAfterMs
                     if (retryAfter != null && retryAfter in 1..MAX_RETRY_AFTER_WAIT_MS) {
+                        Log.i(TAG, "meal=$mealId: ждём ${retryAfter}мс по Retry-After перед повтором")
                         delay(retryAfter)
                     }
+                    Log.i(TAG, "meal=$mealId: повтор (${outcome.reason})")
                     Result.retry()
                 }
             }
@@ -98,6 +117,8 @@ class AnalyzeWorker(
     }
 
     companion object {
+        private const val TAG = "FitAppWorker"
+
         const val KEY_MEAL_ID = "mealId"
         const val MAX_ATTEMPTS = 5
         const val MODEL_NAME = "qwen4-max"

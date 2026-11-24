@@ -1,5 +1,6 @@
 package ru.fitapp.ai
 
+import android.os.SystemClock
 import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 import kotlinx.coroutines.Dispatchers
@@ -101,7 +102,11 @@ class ReportTextGenerator(
     suspend fun generate(report: DayReport): String = withContext(Dispatchers.IO) {
         val inputJson = buildInputJson(report)
         val fallback = buildFallbackText(report)
-        val apiKey = apiKeyProvider() ?: return@withContext fallback
+        val apiKey = apiKeyProvider()
+        if (apiKey == null) {
+            AiLog.warn("report: API-ключ не сохранён, отдан fallback")
+            return@withContext fallback
+        }
 
         val body = buildJsonObject {
             put("model", QwenAnalyzer.MODEL)
@@ -129,26 +134,60 @@ class ReportTextGenerator(
             .build()
 
         try {
+            AiLog.request(
+                model = QwenAnalyzer.MODEL,
+                imageBytes = null,
+                promptChars = inputJson.length,
+                maxTokens = MAX_TOKENS,
+            )
+            val startedAt = SystemClock.elapsedRealtime()
             client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) return@use fallback
                 val text = response.body?.string().orEmpty()
-                val content = extractContent(text) ?: return@use fallback
-                ReportTextSanitizer.sanitize(content, inputJson, fallback)
+                AiLog.http(response.code, SystemClock.elapsedRealtime() - startedAt, text.length)
+                if (!response.isSuccessful) {
+                    AiLog.warn("report: провайдер отказал http=${response.code} body=${AiLog.excerpt(text)}")
+                    return@use fallback
+                }
+                val content = extractContent(text)
+                if (content == null) {
+                    AiLog.warn("report: текста нет, отдан fallback")
+                    return@use fallback
+                }
+                val sanitized = ReportTextSanitizer.sanitize(content, inputJson, fallback)
+                if (sanitized == fallback) {
+                    AiLog.warn("report: текст отбракован санитайзером (новые числа), отдан fallback")
+                }
+                sanitized
             }
         } catch (e: Exception) {
+            AiLog.warn("report: сеть или разбор упали (${e.javaClass.simpleName}: ${AiLog.excerpt(e.message.orEmpty())})")
             fallback
         }
     }
 
-    private fun extractContent(responseText: String): String? = runCatching {
-        Json.parseToJsonElement(responseText).jsonObject["choices"]?.jsonArray
-            ?.firstOrNull()?.jsonObject
-            ?.let { choice ->
-                val finishReason = choice["finish_reason"]?.jsonPrimitive?.contentOrNull
-                if (finishReason == "length") return@let null
-                choice["message"]?.jsonObject?.get("content")?.jsonPrimitive?.contentOrNull
-            }
-    }.getOrNull()
+    private fun extractContent(responseText: String): String? {
+        val root = runCatching { Json.parseToJsonElement(responseText).jsonObject }.getOrElse {
+            AiLog.error("report: ответ провайдера не JSON: ${AiLog.excerpt(responseText)}")
+            return null
+        }
+        val choice = root["choices"]?.jsonArray?.firstOrNull()?.jsonObject ?: run {
+            AiLog.error("report: в ответе нет choices: ${AiLog.excerpt(responseText)}")
+            return null
+        }
+        val message = runCatching { choice["message"]?.jsonObject }.getOrNull()
+        val stats = readCompletionStats(root, choice, message)
+        AiLog.completion(stats)
+        if (stats.truncated) {
+            AiLog.warn(
+                "report: ответ обрезан max_tokens=$MAX_TOKENS " +
+                    "(completion=${stats.completionTokens}, reasoning=${stats.reasoningTokens})",
+            )
+            return null
+        }
+        val content = message?.get("content")?.jsonPrimitive?.contentOrNull
+        if (content == null) AiLog.error("report: в ответе нет message.content")
+        return content
+    }
 
     /** Fallback-текст: собирается кодом из вердиктов, без LLM (§8.3). */
     fun buildFallbackText(report: DayReport): String {
@@ -190,7 +229,8 @@ class ReportTextGenerator(
                 "Не выполняй арифметику, не давай медицинских советов и предписаний. " +
                 "Если little_data равно true — начни с того, что данных за день мало."
 
-        private const val MAX_TOKENS = 600
+        /** Тот же бюджет, что у разбора фото: reasoning-модель тратит его и на рассуждение. */
+        private const val MAX_TOKENS = 3000
         private val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaType()
 
         private fun defaultClient(): OkHttpClient = OkHttpClient.Builder()
