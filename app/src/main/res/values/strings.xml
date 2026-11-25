@@ -70,6 +70,7 @@
     <string name="key_error_model_missing">Ключ принят провайдером, но модель qwen4-max в вашу подписку не входит. Проверьте тариф у провайдера.</string>
     <string name="key_error_tls">Не удалось проверить сертификат сервера (%1$s). На устройстве не установлен доверенный CA-сертификат провайдера — без него разбор фото работать не будет.</string>
     <string name="key_error_network">Провайдер недоступен (%1$s). Проверьте подключение к сети и попробуйте ещё раз.</string>
+    <string name="key_error_storage">Не удалось сохранить ключ в защищённом хранилище устройства. Перезапустите приложение и попробуйте ещё раз.</string>
     <string name="key_import_failed">Не удалось прочитать файл с ключом.</string>
     <string name="key_imported_from_file">Ключ загружен из файла. Нажмите «Проверить».</string>
     <string name="key_clipboard_empty">Буфер обмена пуст.</string>

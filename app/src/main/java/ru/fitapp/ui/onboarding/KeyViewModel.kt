@@ -24,6 +24,7 @@ sealed interface KeyCheckUiResult {
     data object ModelMissing : KeyCheckUiResult
     data class TlsError(val detail: String) : KeyCheckUiResult
     data class NetworkError(val detail: String) : KeyCheckUiResult
+    data object StorageError : KeyCheckUiResult
 }
 
 /**
@@ -109,7 +110,13 @@ class KeyViewModel(app: Application) : AndroidViewModel(app) {
             _checking.value = true
             _result.value = null
             Log.i(TAG, "check: старт проверки ключа (значение не логируется)")
-            withContext(Dispatchers.IO) { fitApp.keyStore.save(key) }
+            val saved = withContext(Dispatchers.IO) { fitApp.keyStore.save(key) }
+            if (!saved) {
+                Log.e(TAG, "check: ключ не записан в хранилище, проверка отменена")
+                _result.value = KeyCheckUiResult.StorageError
+                _checking.value = false
+                return@launch
+            }
             val probe = fitApp.analyzer.probeKeyDetailed()
             if (probe !is KeyProbeResult.Valid) {
                 Log.w(TAG, "check: проверка не прошла ($probe), ключ удалён из хранилища")

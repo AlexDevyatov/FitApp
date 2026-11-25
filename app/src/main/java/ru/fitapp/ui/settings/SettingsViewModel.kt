@@ -53,14 +53,18 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
     /** Ключ лежит в EncryptedSharedPreferences — читаем не на главном потоке. */
     fun refreshKeyState() {
         viewModelScope.launch(Dispatchers.IO) {
-            _hasKey.value = fitApp.keyStore.read() != null
+            // Экран настроек открывается всегда: сбой хранилища ключа — это не повод падать.
+            _hasKey.value = runCatching { fitApp.keyStore.read() }
+                .onFailure { Log.e(TAG, "settings: состояние ключа не прочитано", it) }
+                .getOrNull() != null
         }
     }
 
     fun clearKey() {
         viewModelScope.launch(Dispatchers.IO) {
             Log.i(TAG, "settings: пользователь удаляет API-ключ")
-            fitApp.keyStore.clear()
+            runCatching { fitApp.keyStore.clear() }
+                .onFailure { Log.e(TAG, "settings: ключ не удалён", it) }
             _hasKey.value = false
         }
     }

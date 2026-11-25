@@ -232,6 +232,10 @@ fun KeyScreen(
                     success = false,
                     text = stringResource(R.string.key_error_network, r.detail),
                 )
+                KeyCheckUiResult.StorageError -> KeyResultCard(
+                    success = false,
+                    text = stringResource(R.string.key_error_storage),
+                )
             }
 
             if (checking) {
