@@ -6,6 +6,17 @@ plugins {
     id("com.google.devtools.ksp")
 }
 
+// Подписывание релиза через переменные окружения (CI) вместо хранения keystore в репозитории.
+// Локально: задайте те же переменные в оболочке (см. CI_SETUP.md).
+val keystoreFileEnv = System.getenv("KEYSTORE_FILE")
+val keystorePasswordEnv = System.getenv("KEYSTORE_PASSWORD") ?: ""
+val keyAliasEnv = System.getenv("KEY_ALIAS") ?: ""
+val keyPasswordEnv = System.getenv("KEY_PASSWORD") ?: ""
+
+// Версия может переопределяться из CI (номер тега и номер запуска workflow).
+val versionNameOverride = System.getenv("VERSION_NAME")?.takeIf { it.isNotBlank() }
+val versionCodeOverride = System.getenv("VERSION_CODE")?.toIntOrNull()
+
 android {
     namespace = "ru.fitapp"
     compileSdk = 36
@@ -16,14 +27,34 @@ android {
         applicationId = "ru.fitapp"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = versionCodeOverride ?: 1
+        versionName = versionNameOverride ?: "0.1.0"
+    }
+
+    signingConfigs {
+        create("release") {
+            if (keystoreFileEnv != null) {
+                val ksFile = file(keystoreFileEnv)
+                if (!ksFile.exists()) {
+                    throw GradleException(
+                        "KEYSTORE_FILE указывает на несуществующий файл: ${ksFile.absolutePath}"
+                    )
+                }
+                storeFile = ksFile
+                storePassword = keystorePasswordEnv
+                keyAlias = keyAliasEnv
+                keyPassword = keyPasswordEnv
+            }
+        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            if (keystoreFileEnv != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
 

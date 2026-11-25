@@ -1,0 +1,22 @@
+# Нормализация переводов строк: в репозитории всегда LF.
+* text=auto eol=lf
+
+# Windows-скрипты — CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# POSIX-скрипты и CI-конфиги — строго LF (иначе bash и Actions падают)
+*.sh text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+gradlew text eol=lf
+
+# Бинарные файлы
+*.jar binary
+*.png binary
+*.jpg binary
+*.webp binary
+*.keystore binary
+*.jks binary
+*.aab binary

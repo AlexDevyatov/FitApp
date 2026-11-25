@@ -5,6 +5,8 @@ local.properties
 secrets.properties
 *.keystore
 *.jks
+keystore_base64.txt
+signing-credentials.local.txt
 build/
 .gradle/
 .idea/
