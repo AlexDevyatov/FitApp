@@ -297,6 +297,13 @@
     <string name="settings_push_title">Вечерний отчёт</string>
     <string name="settings_push_time_short">Время: %1$02d:00</string>
 
+    <!-- Оформление -->
+    <string name="settings_group_appearance">Оформление</string>
+    <string name="settings_theme_title">Тёмная тема</string>
+    <string name="settings_theme_system">Как в системе</string>
+    <string name="settings_theme_light">Светлая</string>
+    <string name="settings_theme_dark">Тёмная</string>
+
     <!-- Редизайн: съёмка -->
     <string name="capture_flash">Вспышка</string>
 </resources>

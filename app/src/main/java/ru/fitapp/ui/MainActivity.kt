@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
@@ -17,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import ru.fitapp.FitAppApplication
 import ru.fitapp.core.LogTags
+import ru.fitapp.data.prefs.SettingsStore
 import ru.fitapp.ui.theme.FitAppTheme
 
 /**
@@ -32,7 +34,15 @@ class MainActivity : ComponentActivity() {
         Log.i(LogTags.UI, "ui: MainActivity.onCreate")
         enableEdgeToEdge()
         setContent {
-            FitAppTheme {
+            val app = LocalContext.current.applicationContext as FitAppApplication
+            val themeMode by app.settingsStore.darkThemeMode.collectAsState(initial = SettingsStore.THEME_MODE_SYSTEM)
+            val systemDark = isSystemInDarkTheme()
+            val isDark = when (themeMode) {
+                SettingsStore.THEME_MODE_LIGHT -> false
+                SettingsStore.THEME_MODE_DARK -> true
+                else -> systemDark
+            }
+            FitAppTheme(darkTheme = isDark) {
                 FitAppRoot()
             }
         }

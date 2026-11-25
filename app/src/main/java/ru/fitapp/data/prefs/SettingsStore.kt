@@ -32,6 +32,13 @@ class SettingsStore(context: Context) {
     val pushHour: Flow<Int> =
         dataStore.data.map { (it[KEY_PUSH_HOUR] ?: DEFAULT_PUSH_HOUR).coerceIn(0, 23) }
 
+    /**
+     * Тема оформления: 0 = как в системе, 1 = светлая, 2 = тёмная.
+     * Значение по умолчанию — 0 (следовать системе).
+     */
+    val darkThemeMode: Flow<Int> =
+        dataStore.data.map { (it[KEY_DARK_THEME_MODE] ?: THEME_MODE_SYSTEM).coerceIn(THEME_MODE_SYSTEM, THEME_MODE_DARK) }
+
     suspend fun setOnboardingCompleted(completed: Boolean) {
         dataStore.edit { it[KEY_ONBOARDING_COMPLETED] = completed }
         Log.i(TAG, "settings: onboarding_completed=$completed")
@@ -48,13 +55,29 @@ class SettingsStore(context: Context) {
         Log.i(TAG, "settings: push_hour=$clamped")
     }
 
+    suspend fun setDarkThemeMode(mode: Int) {
+        val clamped = mode.coerceIn(THEME_MODE_SYSTEM, THEME_MODE_DARK)
+        dataStore.edit { it[KEY_DARK_THEME_MODE] = clamped }
+        Log.i(TAG, "settings: dark_theme_mode=$clamped")
+    }
+
     companion object {
         private const val TAG = LogTags.DATA
 
         const val DEFAULT_PUSH_HOUR = 21
 
+        /** Как в системе. */
+        const val THEME_MODE_SYSTEM = 0
+
+        /** Всегда светлая. */
+        const val THEME_MODE_LIGHT = 1
+
+        /** Всегда тёмная. */
+        const val THEME_MODE_DARK = 2
+
         private val KEY_ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
         private val KEY_PUSH_ENABLED = booleanPreferencesKey("push_enabled")
         private val KEY_PUSH_HOUR = intPreferencesKey("push_hour")
+        private val KEY_DARK_THEME_MODE = intPreferencesKey("dark_theme_mode")
     }
 }

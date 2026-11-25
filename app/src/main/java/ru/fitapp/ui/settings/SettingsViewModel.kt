@@ -14,6 +14,7 @@ import kotlinx.coroutines.launch
 import ru.fitapp.FitAppApplication
 import ru.fitapp.core.LogTags
 import ru.fitapp.data.MealStats
+import ru.fitapp.data.prefs.SettingsStore
 import ru.fitapp.domain.DailyTargets
 import ru.fitapp.work.EveningReportScheduler
 
@@ -32,7 +33,11 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), true)
 
     val pushHour: StateFlow<Int> = fitApp.settingsStore.pushHour
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ru.fitapp.data.prefs.SettingsStore.DEFAULT_PUSH_HOUR)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsStore.DEFAULT_PUSH_HOUR)
+
+    /** Тема: 0 = как в системе, 1 = светлая, 2 = тёмная. */
+    val darkThemeMode: StateFlow<Int> = fitApp.settingsStore.darkThemeMode
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsStore.THEME_MODE_SYSTEM)
 
     val targets: StateFlow<DailyTargets?> = fitApp.profileRepository.targets
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
@@ -83,6 +88,13 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
             Log.i(TAG, "settings: пользователь меняет час пуша hour=$hour")
             fitApp.settingsStore.setPushHour(hour)
             EveningReportScheduler.reschedule(getApplication())
+        }
+    }
+
+    fun setDarkThemeMode(mode: Int) {
+        viewModelScope.launch {
+            Log.i(TAG, "settings: пользователь меняет тему mode=$mode")
+            fitApp.settingsStore.setDarkThemeMode(mode)
         }
     }
 

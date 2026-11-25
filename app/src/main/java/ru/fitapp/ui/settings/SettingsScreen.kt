@@ -32,6 +32,9 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PieChart
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.BrightnessAuto
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -63,6 +66,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import ru.fitapp.R
 import ru.fitapp.core.LogTags
+import ru.fitapp.data.prefs.SettingsStore
 import ru.fitapp.ui.FitAppBottomBar
 import ru.fitapp.ui.Routes
 import ru.fitapp.ui.common.ScreenTopBar
@@ -85,6 +89,7 @@ fun SettingsScreen(navController: NavController) {
     val hasKey by vm.hasKey.collectAsState()
     val pushEnabled by vm.pushEnabled.collectAsState()
     val pushHour by vm.pushHour.collectAsState()
+    val darkThemeMode by vm.darkThemeMode.collectAsState()
     val targets by vm.targets.collectAsState()
 
     val context = LocalContext.current
@@ -169,6 +174,44 @@ fun SettingsScreen(navController: NavController) {
                         },
                     )
                 }
+            }
+
+            SettingsGroup(title = stringResource(R.string.settings_group_appearance)) {
+                SettingsRow(
+                    icon = when (darkThemeMode) {
+                        SettingsStore.THEME_MODE_LIGHT -> Icons.Filled.LightMode
+                        SettingsStore.THEME_MODE_DARK -> Icons.Filled.DarkMode
+                        else -> Icons.Filled.BrightnessAuto
+                    },
+                    title = stringResource(R.string.settings_theme_title),
+                    subtitle = when (darkThemeMode) {
+                        SettingsStore.THEME_MODE_LIGHT -> stringResource(R.string.settings_theme_light)
+                        SettingsStore.THEME_MODE_DARK -> stringResource(R.string.settings_theme_dark)
+                        else -> stringResource(R.string.settings_theme_system)
+                    },
+                    trailing = {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            ThemeChip(
+                                selected = darkThemeMode == SettingsStore.THEME_MODE_SYSTEM,
+                                label = stringResource(R.string.settings_theme_system),
+                                onClick = { vm.setDarkThemeMode(SettingsStore.THEME_MODE_SYSTEM) },
+                            )
+                            ThemeChip(
+                                selected = darkThemeMode == SettingsStore.THEME_MODE_LIGHT,
+                                label = stringResource(R.string.settings_theme_light),
+                                onClick = { vm.setDarkThemeMode(SettingsStore.THEME_MODE_LIGHT) },
+                            )
+                            ThemeChip(
+                                selected = darkThemeMode == SettingsStore.THEME_MODE_DARK,
+                                label = stringResource(R.string.settings_theme_dark),
+                                onClick = { vm.setDarkThemeMode(SettingsStore.THEME_MODE_DARK) },
+                            )
+                        }
+                    },
+                )
             }
 
             SettingsGroup(title = stringResource(R.string.settings_group_reminders)) {
@@ -405,6 +448,31 @@ private fun ProfileCard(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun ThemeChip(
+    selected: Boolean,
+    label: String,
+    onClick: () -> Unit,
+) {
+    val scheme = MaterialTheme.colorScheme
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(20.dp))
+            .background(
+                if (selected) scheme.primary else scheme.surfaceVariant,
+            )
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 6.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            label,
+            style = MaterialTheme.typography.labelMedium,
+            color = if (selected) scheme.onPrimary else scheme.onSurfaceVariant,
+        )
     }
 }
 
