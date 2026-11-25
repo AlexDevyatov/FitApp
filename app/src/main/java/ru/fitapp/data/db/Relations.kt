@@ -18,3 +18,17 @@ data class DayStats(
     val failedCount: Int,
     val totalKcal: Double,
 )
+
+/** Одна точка графика правок: день и число правок. */
+data class EditDayCount(
+    val day: String,
+    val count: Int,
+)
+
+/** Последняя правка для списка «что исправили». */
+data class RecentEdit(
+    val field: String,
+    val before: String?,
+    val after: String?,
+    val at: Long,
+)

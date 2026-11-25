@@ -1,6 +1,7 @@
 package ru.fitapp.ui.capture
 
 import android.app.Application
+import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -44,6 +45,23 @@ class CaptureViewModel(app: Application) : AndroidViewModel(app) {
             Log.i(TAG, "capture: кадр получен bytes=${jpeg.size}, сохранение")
             val result = runCatching { creator.importJpeg(jpeg) }
             result.exceptionOrNull()?.let { Log.e(TAG, "capture: кадр не сохранён bytes=${jpeg.size}", it) }
+            _state.value = if (result.isSuccess) CaptureState.Saved else CaptureState.Error
+            Log.i(TAG, "capture: state=${_state.value.stateName()} meal=${result.getOrNull()}")
+        }
+    }
+
+    /** Снимок из галереи с экрана съёмки идёт тем же путём, что и с камеры. */
+    fun importFromUri(uri: Uri) {
+        val current = _state.value
+        if (current is CaptureState.Saving || current is CaptureState.Saved) {
+            Log.w(TAG, "capture: импорт проигнорирован state=${current.stateName()}")
+            return
+        }
+        viewModelScope.launch {
+            _state.value = CaptureState.Saving
+            Log.i(TAG, "capture: выбран кадр из галереи uri=$uri")
+            val result = runCatching { creator.importFromUri(uri) }
+            result.exceptionOrNull()?.let { Log.e(TAG, "capture: галерея не дала кадр", it) }
             _state.value = if (result.isSuccess) CaptureState.Saved else CaptureState.Error
             Log.i(TAG, "capture: state=${_state.value.stateName()} meal=${result.getOrNull()}")
         }

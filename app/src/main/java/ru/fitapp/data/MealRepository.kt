@@ -13,12 +13,14 @@ import ru.fitapp.core.logExcerpt
 import ru.fitapp.data.db.DayDao
 import ru.fitapp.data.db.DayEntity
 import ru.fitapp.data.db.EditDao
+import ru.fitapp.data.db.EditDayCount
 import ru.fitapp.data.db.EditEntity
 import ru.fitapp.data.db.ItemEntity
 import ru.fitapp.data.db.MealDao
 import ru.fitapp.data.db.MealEntity
 import ru.fitapp.data.db.MealStatus
 import ru.fitapp.data.db.MealWithItems
+import ru.fitapp.data.db.RecentEdit
 import ru.fitapp.domain.AnalyzedItem
 import ru.fitapp.domain.FrameKind
 
@@ -229,6 +231,10 @@ class MealRepository(
     }
 
     fun observeEditCount(): Flow<Int> = editDao.observeTotalCount()
+
+    fun observeEditDays(): Flow<List<EditDayCount>> = editDao.observeEditDays()
+
+    fun observeRecentEdits(): Flow<List<RecentEdit>> = editDao.observeRecentEdits()
 
     /** Локальная метрика правок для экрана «Статистика теста» (§9, §15 PLAN). */
     fun observeMealStats(): Flow<MealStats> = combine(

@@ -126,7 +126,7 @@
     <string name="capture_no_camera">Камера недоступна на этом устройстве. Воспользуйтесь кнопкой «Из галереи» на экране дня.</string>
 
     <!-- Карточка (meal) -->
-    <string name="meal_title">Карточка</string>
+    <string name="meal_title">Приём пищи</string>
     <string name="meal_delete_card">Удалить карточку</string>
     <string name="meal_delete_confirm_title">Удалить карточку?</string>
     <string name="meal_delete_confirm_text">Карточка вместе с фотографией и разбором будет удалена навсегда.</string>
@@ -238,4 +238,64 @@
     <string name="stats_edited_meals_none">Отредактировано: 0 из %1$d</string>
     <string name="stats_total_edits">Всего правок: %1$d</string>
     <string name="stats_note">Эти данные хранятся только на устройстве и никуда не отправляются.</string>
+
+    <!-- Редизайн: общие единицы и экран дня -->
+    <string name="unit_kcal">ккал</string>
+    <string name="day_title">День</string>
+    <string name="day_of_target">из %1$d ккал</string>
+    <string name="day_target_missing">цель не задана</string>
+    <string name="day_kcal_left">Осталось %1$d ккал</string>
+    <string name="day_kcal_over">Перебор %1$d ккал</string>
+    <string name="day_meals_title">Приёмы пищи</string>
+    <string name="day_meals_count">%1$d</string>
+    <string name="day_macro_protein">Белки</string>
+    <string name="day_macro_fat">Жиры</string>
+    <string name="day_macro_carbs">Углеводы</string>
+    <string name="meal_more">Ещё</string>
+
+    <!-- Редизайн: онбординг -->
+    <string name="key_onboarding_title">Подключите ИИ</string>
+    <string name="key_onboarding_caption">Введите ключ доступа, чтобы приложение могло распознавать еду на фотографиях.</string>
+    <string name="key_onboarding_step">Шаг 1 из 3</string>
+    <string name="profile_onboarding_title">Расскажите о себе</string>
+    <string name="profile_onboarding_step">Шаг 2 из 3 · это нужно для расчёта вашей нормы</string>
+    <string name="profile_deficit_short">15–20%</string>
+    <string name="profile_activity_short_low">Сидячая</string>
+    <string name="profile_activity_short_light">Лёгкая</string>
+    <string name="profile_activity_short_moderate">Умеренная</string>
+    <string name="profile_activity_short_high">Высокая</string>
+    <string name="profile_activity_desc_low">без спорта</string>
+    <string name="profile_activity_desc_light">1–3 раза</string>
+    <string name="profile_activity_desc_moderate">3–5 раз</string>
+    <string name="profile_activity_desc_high">5+ раз</string>
+
+    <!-- Редизайн: отчёт и календарь -->
+    <string name="report_percent_target">%1$d%% от цели</string>
+    <string name="report_target_short">цель %1$d г</string>
+    <string name="calendar_trend_hint">Нажмите на день, чтобы открыть дневник</string>
+
+    <!-- Редизайн: настройки и статистика -->
+    <string name="settings_profile_title">Мой профиль</string>
+    <string name="settings_profile_goal">Цель %1$d ккал в день</string>
+    <string name="settings_profile_edit">Изменить</string>
+    <string name="settings_group_connection">Подключение</string>
+    <string name="settings_group_reminders">Напоминания</string>
+    <string name="settings_group_goals">Цели и анкета</string>
+    <string name="settings_group_data">Данные</string>
+    <string name="settings_group_about">О приложении</string>
+    <string name="settings_push_enabled_hint">Каждый день в выбранное время</string>
+    <string name="settings_about_version">Версия 0.1.0</string>
+    <string name="settings_about_note">Дневник питания с разбором фотографий</string>
+    <string name="stats_metric_meals">приёмов пищи</string>
+    <string name="stats_metric_edited">исправлено</string>
+    <string name="stats_metric_accuracy">точность</string>
+    <string name="stats_edits_title">Правки по дням</string>
+    <string name="stats_edits_empty">Правок пока не было</string>
+    <string name="stats_recent_title">Последние правки</string>
+    <string name="stats_recent_empty">Правок пока не было</string>
+    <string name="settings_push_title">Вечерний отчёт</string>
+    <string name="settings_push_time_short">Время: %1$02d:00</string>
+
+    <!-- Редизайн: съёмка -->
+    <string name="capture_flash">Вспышка</string>
 </resources>

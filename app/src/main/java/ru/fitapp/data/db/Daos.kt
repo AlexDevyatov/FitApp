@@ -189,4 +189,21 @@ interface EditDao {
 
     @Query("SELECT COUNT(*) FROM edit")
     suspend fun totalCount(): Int
+
+    /** График правок по дням: последние семь дней с правками. */
+    @Query(
+        """
+        SELECT strftime('%Y-%m-%d', at / 1000, 'unixepoch', 'localtime') AS day,
+               COUNT(*) AS count
+        FROM edit
+        GROUP BY day
+        ORDER BY day DESC
+        LIMIT 7
+        """
+    )
+    fun observeEditDays(): Flow<List<EditDayCount>>
+
+    /** Последние правки: что и на что исправляли. */
+    @Query("SELECT field, before, after, at FROM edit ORDER BY at DESC LIMIT 5")
+    fun observeRecentEdits(): Flow<List<RecentEdit>>
 }

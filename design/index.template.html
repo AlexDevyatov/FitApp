@@ -1,0 +1,1729 @@
+<!doctype html>
+<html lang="ru" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FitApp — редизайн интерфейса · Material Design 3</title>
+<style>
+/*__FONTS__*/
+
+:root {
+  --paper: #f4f1e8;
+  --paper-soft: #faf7ef;
+  --card: #ffffff;
+  --ink: #17211c;
+  --muted: #53645c;
+  --line: #ded9cc;
+  --line-soft: #e9e5d9;
+  --emerald: #0e6b4f;
+  --emerald-deep: #0a5340;
+  --emerald-wash: #e2f1e8;
+  --lime: #c8f26a;
+  --lime-soft: #eaf9cd;
+  --apricot: #ffb77d;
+  --apricot-wash: #ffe8d5;
+  --error: #ba1a1a;
+  --shadow: 0 18px 50px rgba(23, 33, 28, .10);
+  --shadow-sm: 0 2px 10px rgba(23, 33, 28, .06);
+  --radius: 28px;
+  --max: 1240px;
+  --font: "Manrope", "Segoe UI", Roboto, system-ui, -apple-system, sans-serif;
+  --on-primary: #ffffff;
+}
+
+[data-theme="dark"] {
+  --paper: #101613;
+  --paper-soft: #161e1a;
+  --card: #19211c;
+  --ink: #e3eae4;
+  --muted: #b0beb6;
+  --line: #2f3a33;
+  --line-soft: #26302a;
+  --emerald: #7fd8b0;
+  --emerald-deep: #a4f2ce;
+  --emerald-wash: #163228;
+  --lime: #c8f26a;
+  --lime-soft: #26351a;
+  --apricot: #ffb77d;
+  --apricot-wash: #33241a;
+  --error: #ffb4ab;
+  --shadow: 0 18px 50px rgba(0, 0, 0, .45);
+  --shadow-sm: 0 2px 10px rgba(0, 0, 0, .25);
+  --on-primary: #003825;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+img { max-width: 100%; display: block; }
+a { color: inherit; }
+button { font: inherit; color: inherit; }
+
+::selection { background: var(--lime); color: #17211c; }
+
+.wrap {
+  width: min(calc(100% - 48px), var(--max));
+  margin: 0 auto;
+}
+
+/* ---------- top bar ---------- */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  backdrop-filter: blur(18px) saturate(1.1);
+  background: color-mix(in srgb, var(--paper) 82%, transparent);
+  border-bottom: 1px solid var(--line-soft);
+}
+.topbar-in {
+  width: min(calc(100% - 48px), var(--max));
+  margin: 0 auto;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 800;
+  letter-spacing: -.03em;
+  font-size: 20px;
+  text-decoration: none;
+  flex: 0 0 auto;
+}
+.brand-mark {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: #0e6b4f;
+  display: grid; place-items: center;
+  box-shadow: 0 6px 16px rgba(14, 107, 79, .28);
+}
+.brand-mark svg { width: 18px; height: 18px; }
+.topnav { display: flex; gap: 4px; margin-left: 8px; flex: 1; }
+.topnav a {
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+  padding: 9px 13px;
+  border-radius: 999px;
+  transition: color .2s, background .2s;
+}
+.topnav a:hover { color: var(--ink); background: var(--paper-soft); }
+.topbar-actions { display: flex; align-items: center; gap: 10px; }
+.badge {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--emerald-deep);
+  background: var(--emerald-wash);
+  border: 1px solid color-mix(in srgb, var(--emerald) 18%, transparent);
+  padding: 7px 12px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.icon-btn {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--card);
+  display: grid; place-items: center;
+  cursor: pointer;
+  transition: transform .2s, border-color .2s;
+}
+.icon-btn:hover { transform: translateY(-1px); border-color: var(--emerald); }
+.icon-btn svg { width: 18px; height: 18px; }
+[data-theme="light"] .moon, [data-theme="dark"] .sun { display: none; }
+
+/* ---------- hero ---------- */
+.hero {
+  position: relative;
+  padding: 72px 0 0;
+  overflow: hidden;
+}
+.hero::before {
+  content: "";
+  position: absolute;
+  right: -200px; top: -120px;
+  width: 720px; height: 720px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(200, 242, 106, .35), transparent 62%);
+  filter: blur(10px);
+  pointer-events: none;
+}
+.hero-grid {
+  width: min(calc(100% - 48px), var(--max));
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1.02fr .98fr;
+  gap: 32px;
+  align-items: center;
+  position: relative;
+}
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--emerald-deep);
+  margin: 0 0 22px;
+}
+.eyebrow .dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--lime);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--lime) 30%, transparent);
+}
+h1 {
+  margin: 0;
+  font-size: clamp(46px, 6.2vw, 84px);
+  line-height: .98;
+  letter-spacing: -.055em;
+  font-weight: 800;
+}
+h1 .mark {
+  color: var(--emerald);
+  position: relative;
+  white-space: nowrap;
+}
+h1 .mark::after {
+  content: "";
+  position: absolute;
+  left: 2%; right: 2%; bottom: .04em;
+  height: .14em;
+  background: var(--lime);
+  border-radius: 99px;
+  z-index: -1;
+  opacity: .85;
+}
+.lead {
+  max-width: 520px;
+  margin: 26px 0 0;
+  font-size: clamp(16px, 1.35vw, 19px);
+  line-height: 1.6;
+  color: var(--muted);
+}
+.hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 30px;
+}
+.meta-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 9px 14px;
+}
+.meta-chip b { color: var(--emerald); font-weight: 800; }
+.hero-cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 34px; }
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 56px;
+  padding: 0 26px;
+  border-radius: 18px;
+  font-weight: 700;
+  font-size: 15px;
+  text-decoration: none;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: transform .2s, box-shadow .2s, background .2s;
+}
+.btn svg { width: 18px; height: 18px; }
+.btn-primary {
+  background: var(--emerald);
+  color: var(--on-primary);
+  box-shadow: 0 12px 28px rgba(14, 107, 79, .28);
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 18px 36px rgba(14, 107, 79, .34); }
+.btn-ghost {
+  background: transparent;
+  border-color: var(--line);
+  color: var(--ink);
+}
+.btn-ghost:hover { border-color: var(--emerald); color: var(--emerald); }
+
+.hero-stage {
+  position: relative;
+  height: 620px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.stage-glow {
+  position: absolute;
+  width: 440px; height: 440px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(14, 107, 79, .18), transparent 66%);
+  filter: blur(14px);
+}
+.phone {
+  position: absolute;
+  margin: 0;
+  border-radius: 42px;
+  background: #0b0e0c;
+  padding: 9px;
+  box-shadow: 0 30px 70px rgba(23, 33, 28, .30);
+  transition: transform .5s cubic-bezier(.2, 0, 0, 1);
+}
+.phone img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 34px;
+}
+.phone-front {
+  width: 286px;
+  height: 552px;
+  z-index: 3;
+  transform: rotate(-2deg);
+}
+.phone-back {
+  width: 232px;
+  height: 448px;
+  z-index: 1;
+  opacity: .98;
+}
+.phone-left { transform: translate(-186px, 34px) rotate(-10deg); }
+.phone-right { transform: translate(186px, 42px) rotate(9deg); }
+.hero-stage:hover .phone-front { transform: rotate(0deg) translateY(-4px); }
+.hero-stage:hover .phone-left { transform: translate(-196px, 28px) rotate(-12deg); }
+.hero-stage:hover .phone-right { transform: translate(196px, 36px) rotate(11deg); }
+
+.hero-strip {
+  width: min(calc(100% - 48px), var(--max));
+  margin: 58px auto 0;
+  border-top: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  padding: 26px 0 46px;
+}
+.strip-item strong {
+  display: block;
+  font-size: 30px;
+  letter-spacing: -.04em;
+  line-height: 1.1;
+}
+.strip-item span { font-size: 13px; color: var(--muted); }
+
+/* ---------- sections ---------- */
+section { scroll-margin-top: 90px; }
+.section { padding: 96px 0; }
+.section-head { max-width: 760px; margin-bottom: 44px; }
+.kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--emerald-deep);
+  margin-bottom: 16px;
+}
+.kicker::before {
+  content: "";
+  width: 26px; height: 2px;
+  background: var(--emerald);
+  border-radius: 99px;
+}
+h2 {
+  margin: 0;
+  font-size: clamp(32px, 4vw, 52px);
+  line-height: 1.06;
+  letter-spacing: -.045em;
+  font-weight: 800;
+}
+.section-head p {
+  margin: 18px 0 0;
+  color: var(--muted);
+  font-size: 17px;
+  max-width: 620px;
+}
+
+/* principles */
+.principles {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+.principle {
+  background: var(--card);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius);
+  padding: 26px 24px 28px;
+  position: relative;
+  overflow: hidden;
+  transition: transform .3s, box-shadow .3s, border-color .3s;
+}
+.principle:hover { transform: translateY(-5px); box-shadow: var(--shadow); border-color: transparent; }
+.principle .num {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  color: var(--emerald);
+  display: block;
+  margin-bottom: 22px;
+}
+.principle h3 { margin: 0 0 10px; font-size: 19px; letter-spacing: -.02em; }
+.principle p { margin: 0; font-size: 14px; line-height: 1.55; color: var(--muted); }
+.principle::after {
+  content: "";
+  position: absolute;
+  left: 24px; right: 24px; bottom: 0;
+  height: 3px;
+  background: var(--lime);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform .35s;
+}
+.principle:hover::after { transform: scaleX(1); }
+
+/* ---------- system ---------- */
+.system-grid {
+  display: grid;
+  grid-template-columns: 1.15fr .85fr;
+  gap: 20px;
+  align-items: start;
+}
+.panel {
+  background: var(--card);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius);
+  padding: 30px;
+}
+.panel h3 {
+  margin: 0 0 6px;
+  font-size: 20px;
+  letter-spacing: -.02em;
+}
+.panel .hint { margin: 0 0 24px; color: var(--muted); font-size: 14px; }
+
+.swatches {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.swatch {
+  background: var(--c);
+  color: var(--t, #fff);
+  border-radius: 18px;
+  padding: 16px;
+  min-height: 98px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border: 1px solid color-mix(in srgb, var(--ink) 10%, transparent);
+}
+.swatch .name { font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; opacity: .85; }
+.swatch .hex { font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.swatch.wide { grid-column: span 2; }
+.swatch.big { min-height: 128px; }
+.swatch.big .name { font-size: 14px; }
+.swatch.big .hex { font-size: 15px; }
+
+.dark-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-top: 18px;
+}
+.dark-row .swatch { min-height: 74px; padding: 12px; border-radius: 14px; }
+.dark-row .name { font-size: 10px; }
+.dark-row .hex { font-size: 11px; }
+
+.type-list { display: grid; gap: 0; }
+.type-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 16px;
+  align-items: baseline;
+  padding: 15px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+.type-row:last-child { border-bottom: 0; padding-bottom: 0; }
+.type-sample { letter-spacing: -.03em; line-height: 1.05; }
+.type-meta {
+  font-size: 11px;
+  color: var(--muted);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.shapes { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
+.shape {
+  width: 78px; height: 78px;
+  border: 1.5px solid var(--emerald);
+  background: var(--emerald-wash);
+  display: grid;
+  place-items: end center;
+  padding-bottom: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--emerald-deep);
+}
+
+.component-board {
+  display: grid;
+  grid-template-columns: 1.1fr .9fr;
+  gap: 24px;
+}
+.demo {
+  background: var(--paper-soft);
+  border: 1px dashed var(--line);
+  border-radius: 22px;
+  padding: 22px;
+}
+.demo h4 {
+  margin: 0 0 16px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.demo-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.demo-stack { display: grid; gap: 10px; }
+
+.ui-btn {
+  height: 48px;
+  padding: 0 20px;
+  border-radius: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 14px;
+  font-weight: 700;
+  border: 1px solid transparent;
+  cursor: default;
+}
+.ui-btn.primary { background: var(--emerald); color: var(--on-primary); }
+.ui-btn.outline { border-color: var(--line); background: var(--card); }
+.ui-btn.small { height: 40px; font-size: 13px; border-radius: 14px; padding: 0 16px; }
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .01em;
+}
+.chip.ok { background: var(--emerald-wash); color: var(--emerald-deep); }
+.chip.wait { background: var(--lime-soft); color: #3a4a00; }
+.chip.err { background: var(--apricot-wash); color: #6b2b00; }
+.chip.neutral { background: var(--line-soft); color: var(--muted); }
+
+.macro-mini {
+  flex: 1;
+  min-width: 96px;
+  background: var(--card);
+  border: 1px solid var(--line-soft);
+  border-radius: 16px;
+  padding: 11px 13px;
+}
+.macro-mini span { display: block; font-size: 11px; color: var(--muted); }
+.macro-mini b { font-size: 15px; letter-spacing: -.02em; }
+.macro-mini .bar { height: 4px; border-radius: 9px; background: var(--line-soft); margin-top: 8px; overflow: hidden; }
+.macro-mini .bar i { display: block; height: 100%; border-radius: 9px; background: var(--emerald); }
+
+.mini-nav {
+  display: flex;
+  justify-content: space-around;
+  background: var(--card);
+  border: 1px solid var(--line-soft);
+  border-radius: 18px;
+  padding: 8px;
+}
+.mini-tab {
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted);
+  padding: 5px 12px;
+}
+.mini-tab i {
+  width: 40px; height: 24px;
+  border-radius: 99px;
+  display: grid; place-items: center;
+  background: transparent;
+}
+.mini-tab.on { color: var(--emerald-deep); }
+.mini-tab.on i { background: var(--emerald-wash); }
+.mini-tab svg { width: 16px; height: 16px; }
+
+.field {
+  height: 50px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--card);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 15px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.field svg { width: 17px; height: 17px; opacity: .7; }
+
+.segmented {
+  display: flex;
+  background: var(--paper-soft);
+  border: 1px solid var(--line-soft);
+  border-radius: 14px;
+  padding: 3px;
+  gap: 3px;
+}
+.segmented span {
+  flex: 1;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 8px;
+  border-radius: 11px;
+  color: var(--muted);
+}
+.segmented span.on { background: var(--emerald); color: var(--on-primary); }
+
+/* ---------- screens ---------- */
+.screens-section { background: var(--paper-soft); border-top: 1px solid var(--line-soft); border-bottom: 1px solid var(--line-soft); }
+.screens-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px 24px;
+}
+.screen-card { display: flex; flex-direction: column; }
+.device {
+  all: unset;
+  display: block;
+  aspect-ratio: 928 / 1664;
+  border-radius: 36px;
+  background: #0b0e0c;
+  padding: 8px;
+  box-shadow: var(--shadow-sm);
+  cursor: zoom-in;
+  transition: transform .35s cubic-bezier(.2, 0, 0, 1), box-shadow .35s;
+  position: relative;
+  overflow: hidden;
+}
+.device img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  border-radius: 29px;
+  transition: transform .6s cubic-bezier(.2, 0, 0, 1);
+}
+.device:hover { transform: translateY(-7px); box-shadow: 0 26px 60px rgba(23, 33, 28, .22); }
+.device:hover img { transform: scale(1.018); }
+.device:focus-visible { outline: 3px solid var(--emerald); outline-offset: 4px; }
+.device::after {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border-radius: 29px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08);
+  pointer-events: none;
+}
+.screen-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-top: 18px;
+}
+.screen-head .num {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--emerald);
+  letter-spacing: .1em;
+}
+.screen-head h3 { margin: 0; font-size: 18px; letter-spacing: -.02em; }
+.screen-card p {
+  margin: 7px 0 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.summary-tile {
+  grid-column: span 2;
+  background: #0e6b4f;
+  color: #fff;
+  border-radius: 32px;
+  padding: 40px 38px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 26px;
+  position: relative;
+  overflow: hidden;
+  min-height: 320px;
+}
+.summary-tile::after {
+  content: "";
+  position: absolute;
+  width: 320px; height: 320px;
+  border-radius: 50%;
+  right: -120px; top: -120px;
+  background: rgba(200, 242, 106, .22);
+  filter: blur(2px);
+}
+.summary-tile .kicker { color: #d9f5e5; margin-bottom: 14px; }
+.summary-tile .kicker::before { background: var(--lime); }
+.summary-tile h3 {
+  margin: 0;
+  font-size: clamp(26px, 2.6vw, 38px);
+  letter-spacing: -.045em;
+  line-height: 1.05;
+  max-width: 460px;
+}
+.summary-tile p {
+  margin: 16px 0 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #cfe9dd;
+  max-width: 430px;
+}
+.summary-list {
+  display: grid;
+  position: relative;
+  z-index: 1;
+  max-width: 460px;
+}
+.summary-list div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 11px 0;
+  border-top: 1px solid rgba(255, 255, 255, .18);
+  font-size: 12.5px;
+}
+.summary-list b { font-weight: 700; color: #fff; }
+.summary-list span { color: #cfe9dd; }
+.summary-tile .summary-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 28px;
+  position: relative;
+  z-index: 1;
+}
+.summary-tile .summary-foot span {
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid rgba(255, 255, 255, .28);
+  border-radius: 999px;
+  padding: 7px 11px;
+  color: #eafff5;
+}
+.summary-tile a {
+  color: var(--lime);
+  font-weight: 700;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(200, 242, 106, .5);
+  padding-bottom: 2px;
+}
+.tag {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .02em;
+  color: var(--emerald-deep);
+  background: var(--emerald-wash);
+  border-radius: 999px;
+  padding: 5px 9px;
+}
+
+/* ---------- flows ---------- */
+.flow-rail {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-wrap: wrap;
+  margin-top: 8px;
+  background: var(--card);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius);
+  padding: 26px 22px;
+}
+.flow-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 10px;
+  flex: 1;
+  min-width: 128px;
+}
+.flow-step .dot {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--emerald-wash);
+  color: var(--emerald-deep);
+  font-size: 12px;
+  font-weight: 800;
+  flex: 0 0 auto;
+}
+.flow-step b { font-size: 14px; letter-spacing: -.01em; }
+.flow-step span { display: block; font-size: 11px; color: var(--muted); font-weight: 500; }
+.flow-arrow { color: var(--line); flex: 0 0 auto; }
+.flow-arrow svg { width: 20px; height: 20px; }
+
+.note-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-top: 18px;
+}
+.note {
+  border-left: 2px solid var(--lime);
+  padding: 4px 0 4px 16px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.note b { color: var(--ink); }
+
+/* ---------- build ---------- */
+.build-grid {
+  display: grid;
+  grid-template-columns: .95fr 1.05fr;
+  gap: 22px;
+  align-items: start;
+}
+.checklist { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
+.check {
+  display: grid;
+  grid-template-columns: 30px 1fr;
+  gap: 14px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+.check:last-child { border-bottom: 0; }
+.check .tick {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: var(--emerald-wash);
+  color: var(--emerald-deep);
+  display: grid; place-items: center;
+  font-size: 12px;
+  font-weight: 800;
+}
+.check b { display: block; font-size: 15px; letter-spacing: -.01em; }
+.check span { font-size: 13px; color: var(--muted); }
+.check code {
+  font-size: 12px;
+  background: var(--paper-soft);
+  border: 1px solid var(--line-soft);
+  border-radius: 6px;
+  padding: 1px 6px;
+  white-space: nowrap;
+}
+
+.code-card {
+  background: #101613;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid #26302a;
+  box-shadow: var(--shadow);
+}
+.code-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 18px;
+  border-bottom: 1px solid #26302a;
+  color: #8fa89a;
+  font-size: 12px;
+  font-weight: 600;
+}
+.code-head .lights { display: flex; gap: 6px; margin-right: 8px; }
+.code-head .lights i { width: 9px; height: 9px; border-radius: 50%; background: #2f3a33; }
+.code-head .lights i:first-child { background: #c8f26a; }
+pre {
+  margin: 0;
+  padding: 22px;
+  overflow-x: auto;
+  color: #dbe7de;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 12.5px;
+  line-height: 1.75;
+  tab-size: 4;
+}
+.tok-k { color: #7fd8b0; }
+.tok-s { color: #d9f29b; }
+.tok-c { color: #7b8f83; }
+.tok-f { color: #ffcf9e; }
+
+.token-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 18px;
+}
+.token-strip span {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: var(--card);
+}
+
+/* ---------- footer ---------- */
+.footer {
+  padding: 70px 0 36px;
+  border-top: 1px solid var(--line);
+  margin-top: 30px;
+}
+.footer-top {
+  display: grid;
+  grid-template-columns: 1.2fr .8fr;
+  gap: 30px;
+  align-items: end;
+}
+.footer h2 {
+  font-size: clamp(40px, 6vw, 76px);
+  letter-spacing: -.06em;
+  margin: 0;
+}
+.footer-links { display: flex; flex-wrap: wrap; gap: 14px; justify-content: flex-end; }
+.footer-links a {
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  color: var(--emerald-deep);
+  border-bottom: 1px solid color-mix(in srgb, var(--emerald) 35%, transparent);
+  padding-bottom: 3px;
+}
+.footer-bottom {
+  margin-top: 40px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line-soft);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ---------- lightbox ---------- */
+dialog.lb {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  width: min(1140px, 94vw);
+  max-width: none;
+  max-height: 92vh;
+  color: var(--ink);
+}
+dialog.lb::backdrop {
+  background: rgba(10, 14, 12, .78);
+  backdrop-filter: blur(8px);
+}
+.lb-panel {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 30px;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 1.05fr .95fr;
+  box-shadow: 0 40px 120px rgba(0, 0, 0, .45);
+  position: relative;
+}
+.lb-media {
+  background: #0b0e0c;
+  display: grid;
+  place-items: center;
+  padding: 22px;
+  min-height: min(78vh, 720px);
+}
+.lb-media img {
+  max-height: min(72vh, 690px);
+  width: auto;
+  max-width: 100%;
+  border-radius: 22px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, .4);
+}
+.lb-body { padding: 38px 36px; display: flex; flex-direction: column; }
+.lb-num {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .14em;
+  color: var(--emerald);
+  text-transform: uppercase;
+}
+.lb-body h3 { margin: 12px 0 0; font-size: 34px; letter-spacing: -.04em; line-height: 1.05; }
+.lb-body p { margin: 14px 0 0; color: var(--muted); font-size: 15px; line-height: 1.6; }
+.lb-body .tags { margin-top: 18px; }
+.lb-notes {
+  list-style: none;
+  margin: 22px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 9px;
+}
+.lb-notes li {
+  display: flex;
+  gap: 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.lb-notes li::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--lime);
+  margin-top: 7px;
+}
+.lb-nav {
+  margin-top: auto;
+  padding-top: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.lb-nav button {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--card);
+  cursor: pointer;
+  display: grid; place-items: center;
+}
+.lb-nav button:hover { border-color: var(--emerald); color: var(--emerald); }
+.lb-count { font-size: 12px; color: var(--muted); font-weight: 700; letter-spacing: .08em; }
+.lb-close {
+  position: absolute;
+  top: 14px; right: 14px;
+  z-index: 3;
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, .2);
+  background: rgba(15, 20, 17, .55);
+  color: #fff;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+}
+
+/* ---------- reveal ---------- */
+.reveal { transition: opacity .7s ease, transform .7s cubic-bezier(.2, 0, 0, 1); }
+.js .reveal { opacity: 0; transform: translateY(22px); }
+.js .reveal.is-visible, .static .reveal { opacity: 1; transform: none; }
+.static .topbar { position: static; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .js .reveal { opacity: 1; transform: none; }
+}
+
+/* ---------- responsive ---------- */
+@media (max-width: 1080px) {
+  .topnav { display: none; }
+  .hero-grid { grid-template-columns: 1fr; gap: 12px; }
+  .hero-stage { height: 540px; }
+  .phone-front { width: 248px; height: 478px; }
+  .phone-back { width: 200px; height: 386px; }
+  .phone-left { transform: translate(-150px, 26px) rotate(-9deg); }
+  .phone-right { transform: translate(150px, 32px) rotate(8deg); }
+  .system-grid, .build-grid { grid-template-columns: 1fr; }
+  .principles { grid-template-columns: repeat(2, 1fr); }
+  .screens-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 760px) {
+  .wrap, .hero-grid, .hero-strip, .topbar-in { width: calc(100% - 32px); }
+  .section { padding: 66px 0; }
+  .hero { padding-top: 46px; }
+  .hero-nav { display: none; }
+  .badge { display: none; }
+  .hero-strip { grid-template-columns: repeat(2, 1fr); gap: 18px; margin-top: 40px; }
+  .hero-stage { height: 470px; }
+  .phone-front { width: 216px; height: 416px; }
+  .phone-back { width: 176px; height: 338px; }
+  .phone-left { transform: translate(-116px, 22px) rotate(-8deg); }
+  .phone-right { transform: translate(116px, 30px) rotate(8deg); }
+  .component-board { grid-template-columns: 1fr; }
+  .screens-grid { grid-template-columns: 1fr; gap: 34px; }
+  .summary-tile { grid-column: span 1; padding: 30px 24px; min-height: 280px; }
+  .device { border-radius: 30px; padding: 7px; }
+  .device img { border-radius: 24px; }
+  .note-row { grid-template-columns: 1fr; }
+  .flow-rail { display: grid; gap: 14px; }
+  .flow-arrow { display: none; }
+  .flow-step { padding: 0; }
+  .footer-top { grid-template-columns: 1fr; }
+  .footer-links { justify-content: flex-start; }
+  .lb-panel { grid-template-columns: 1fr; max-height: 88vh; overflow: auto; }
+  .lb-media { min-height: 0; padding: 14px; }
+  .lb-media img { max-height: 52vh; }
+  .lb-body { padding: 24px 22px 28px; }
+  .lb-body h3 { font-size: 26px; }
+  .lb-close { top: 10px; right: 10px; }
+}
+
+@media (max-width: 520px) {
+  .principles { grid-template-columns: 1fr; }
+  .swatches { grid-template-columns: repeat(2, 1fr); }
+  .swatch.wide { grid-column: span 2; }
+  .hero-cta .btn { width: 100%; }
+  .strip-item strong { font-size: 24px; }
+}
+</style>
+<script>
+  document.documentElement.classList.add('js');
+  if (location.search.indexOf('static') !== -1) document.documentElement.classList.add('static');
+</script>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="#top" aria-label="FitApp — наверх">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M19.5 4.5C12 5 6.5 8.5 5.3 14.2c-.5 2.4.6 4.3 2.6 5.1 5.6 2.3 10.9-3.4 11.6-14.8Z" fill="#fff"/><path d="M5 20c2.2-5.1 5.2-8.6 9.6-11.2" stroke="#0E6B4F" stroke-width="1.4" stroke-linecap="round"/><circle cx="6.2" cy="16.6" r="1.5" fill="#C8F26A"/></svg>
+      </span>
+      FitApp
+    </a>
+    <nav class="topnav" aria-label="Разделы">
+      <a href="#principles">Принципы</a>
+      <a href="#system">Система</a>
+      <a href="#screens">Экраны</a>
+      <a href="#flows">Сценарии</a>
+      <a href="#build">Внедрение</a>
+    </nav>
+    <div class="topbar-actions">
+      <button class="icon-btn" id="theme-toggle" type="button" aria-label="Переключить тему" title="Светлая / тёмная">
+        <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" stroke-linecap="round"/></svg>
+        <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z" stroke-linejoin="round"/></svg>
+      </button>
+      <span class="badge">Material 3</span>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+
+<section class="hero">
+  <div class="hero-grid">
+    <div class="hero-copy">
+      <p class="eyebrow"><span class="dot"></span>Редизайн интерфейса · 2026</p>
+      <h1>Спокойная<br><span class="mark">энергия</span><br>каждый день</h1>
+      <p class="lead">FitApp — дневник питания, который отвечает на три вопроса за пару секунд: сколько уже съедено, из чего и что делать дальше. Новый язык — тёплая бумага, глубокий изумруд и крупные цифры.</p>
+      <div class="hero-meta">
+        <span class="meta-chip"><b>10</b> экранов</span>
+        <span class="meta-chip"><b>2</b> темы</span>
+        <span class="meta-chip"><b>28 dp</b> радиус</span>
+        <span class="meta-chip"><b>AA</b> контраст</span>
+      </div>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="#screens">
+          Смотреть экраны
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+        <a class="btn btn-ghost" href="#system">Дизайн-система</a>
+      </div>
+    </div>
+    <div class="hero-stage" aria-hidden="true">
+      <span class="stage-glow"></span>
+      <figure class="phone phone-back phone-left"><img src="mockups/03-meal.png" alt=""></figure>
+      <figure class="phone phone-front"><img src="mockups/01-today.png" alt=""></figure>
+      <figure class="phone phone-back phone-right"><img src="mockups/10-today-dark.png" alt=""></figure>
+    </div>
+  </div>
+  <div class="hero-strip">
+    <div class="strip-item"><strong>0,3 с</strong><span>на считывание дневной нормы</span></div>
+    <div class="strip-item"><strong>1 жест</strong><span>от съёмки до готовой карточки</span></div>
+    <div class="strip-item"><strong>3 ответа</strong><span>сколько, из чего, что дальше</span></div>
+    <div class="strip-item"><strong>0 лишнего</strong><span>никаких настроек на первом плане</span></div>
+  </div>
+</section>
+
+<section class="section" id="principles">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="kicker">01 — Принципы</span>
+      <h2>Меньше интерфейса,<br>больше ответов</h2>
+      <p>Нынешний экран выглядит как набор Material-компонентов по умолчанию. Новый строится вокруг одного вопроса пользователя и убирает всё, что не помогает на него ответить.</p>
+    </div>
+    <div class="principles">
+      <article class="principle reveal">
+        <span class="num">01</span>
+        <h3>Цифра — герой</h3>
+        <p>Энергия дня — самый крупный элемент экрана. Макросы идут вторым уровнем, служебные подписи — третьим.</p>
+      </article>
+      <article class="principle reveal">
+        <span class="num">02</span>
+        <h3>Тишина вокруг</h3>
+        <p>Не больше трёх акцентных пятен на экран. Изумрудный отвечает за действие, лайм — только за «хорошо».</p>
+      </article>
+      <article class="principle reveal">
+        <span class="num">03</span>
+        <h3>Состояние видно</h3>
+        <p>Карточка всегда говорит, что с ней происходит: ждёт, в обработке, готово, ошибка, не еда. Цвет плюс подпись.</p>
+      </article>
+      <article class="principle reveal">
+        <span class="num">04</span>
+        <h3>Ошибка объясняет</h3>
+        <p>Человеческий текст и конкретное действие вместо стектрейса. Красный — сигнал, а не декор.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="system">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="kicker">02 — Система</span>
+      <h2>Токены, из которых<br>собирается всё</h2>
+      <p>Цвета, шрифт, форма и компоненты зафиксированы в <a href="tokens.json">tokens.json</a> и повторяют роли Material 3 — внедрение не зависит от конкретных hex.</p>
+    </div>
+
+    <div class="system-grid">
+      <div class="panel reveal">
+        <h3>Цвет</h3>
+        <p class="hint">Тёплая бумага, изумруд для действия, лайм для «в цель».</p>
+        <div class="swatches">
+          <div class="swatch big" style="--c:#0E6B4F;--t:#fff"><span class="name">Primary</span><span class="hex">#0E6B4F</span></div>
+          <div class="swatch big" style="--c:#C8F26A;--t:#243300"><span class="name">Secondary</span><span class="hex">#C8F26A</span></div>
+          <div class="swatch" style="--c:#F4F1E8;--t:#17211C"><span class="name">Background</span><span class="hex">#F4F1E8</span></div>
+          <div class="swatch" style="--c:#FFFFFF;--t:#17211C"><span class="name">Surface</span><span class="hex">#FFFFFF</span></div>
+          <div class="swatch" style="--c:#FFB77D;--t:#4A2600"><span class="name">Tertiary</span><span class="hex">#FFB77D</span></div>
+          <div class="swatch" style="--c:#53645C;--t:#fff"><span class="name">On surface var.</span><span class="hex">#53645C</span></div>
+          <div class="swatch wide" style="--c:#E9E5D9;--t:#17211C"><span class="name">Surface variant</span><span class="hex">#E9E5D9</span></div>
+          <div class="swatch" style="--c:#BA1A1A;--t:#fff"><span class="name">Error</span><span class="hex">#BA1A1A</span></div>
+        </div>
+        <div class="dark-row">
+          <div class="swatch" style="--c:#101613;--t:#E3EAE4"><span class="name">Dark bg</span><span class="hex">#101613</span></div>
+          <div class="swatch" style="--c:#181F1B;--t:#E3EAE4"><span class="name">Dark surface</span><span class="hex">#181F1B</span></div>
+          <div class="swatch" style="--c:#7FD8B0;--t:#003825"><span class="name">Dark primary</span><span class="hex">#7FD8B0</span></div>
+          <div class="swatch" style="--c:#C8F26A;--t:#243300"><span class="name">Dark secondary</span><span class="hex">#C8F26A</span></div>
+        </div>
+      </div>
+
+      <div class="panel reveal">
+        <h3>Типографика</h3>
+        <p class="hint">Manrope: кириллица, геометрия, табличные цифры.</p>
+        <div class="type-list">
+          <div class="type-row">
+            <span class="type-sample" style="font-size:46px;font-weight:800">1 640</span>
+            <span class="type-meta">display · 57 / 700</span>
+          </div>
+          <div class="type-row">
+            <span class="type-sample" style="font-size:30px;font-weight:800">Сегодня</span>
+            <span class="type-meta">headline · 32 / 700</span>
+          </div>
+          <div class="type-row">
+            <span class="type-sample" style="font-size:20px;font-weight:700">Приёмы пищи</span>
+            <span class="type-meta">title · 22 / 600</span>
+          </div>
+          <div class="type-row">
+            <span class="type-sample" style="font-size:15px;font-weight:500;letter-spacing:0">Овсянка с ягодами и черникой</span>
+            <span class="type-meta">body · 16 / 400</span>
+          </div>
+          <div class="type-row">
+            <span class="type-sample" style="font-size:12px;font-weight:600;letter-spacing:.02em">08:20 · БЛЮДО · ГОТОВО</span>
+            <span class="type-meta">label · 12 / 500</span>
+          </div>
+        </div>
+        <div class="shapes">
+          <div class="shape" style="border-radius:8px">8</div>
+          <div class="shape" style="border-radius:16px">16</div>
+          <div class="shape" style="border-radius:24px">24</div>
+          <div class="shape" style="border-radius:32px">32</div>
+          <div class="shape" style="border-radius:999px">full</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel reveal" style="margin-top:20px">
+      <h3>Компоненты</h3>
+      <p class="hint">Те же элементы, что на макетах: кнопки 56 dp, чипы статусов, макросы, навигация с пилюлей.</p>
+      <div class="component-board">
+        <div class="demo">
+          <h4>Действия и поля</h4>
+          <div class="demo-stack">
+            <div class="demo-row">
+              <span class="ui-btn primary">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M4 8h3l1.5-2h7L17 8h3v11H4V8Z" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.2"/></svg>
+                Снять
+              </span>
+              <span class="ui-btn outline">Из галереи</span>
+            </div>
+            <div class="field"><span>API-ключ</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6Z"/><circle cx="12" cy="12" r="2.6"/></svg>
+            </div>
+            <div class="segmented"><span class="on">Блюдо</span><span>Тарелка</span><span>Этикетка</span></div>
+          </div>
+        </div>
+        <div class="demo">
+          <h4>Статусы и макросы</h4>
+          <div class="demo-stack">
+            <div class="demo-row">
+              <span class="chip ok">Готово</span>
+              <span class="chip wait">В обработке</span>
+              <span class="chip err">Ошибка</span>
+              <span class="chip neutral">Не еда</span>
+            </div>
+            <div class="demo-row">
+              <div class="macro-mini"><span>Белки</span><b>92 / 120 г</b><div class="bar"><i style="width:76%"></i></div></div>
+              <div class="macro-mini"><span>Жиры</span><b>58 / 70 г</b><div class="bar"><i style="width:83%"></i></div></div>
+              <div class="macro-mini"><span>Углеводы</span><b>176 / 210 г</b><div class="bar"><i style="width:84%"></i></div></div>
+            </div>
+            <div class="mini-nav">
+              <span class="mini-tab on"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/></svg></i>Сегодня</span>
+              <span class="mini-tab"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M4 10h16"/></svg></i>Календарь</span>
+              <span class="mini-tab"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.4-2.3 1a7 7 0 0 0-1.7-1L14.5 3h-5L9 6.1a7 7 0 0 0-1.7 1L5 6.1 3 9.5 5.1 11a7 7 0 0 0 0 2L3 14.5l2 3.4 2.3-1a7 7 0 0 0 1.7 1l.5 3.1h5l.5-3.1a7 7 0 0 0 1.7-1l2.3 1 2-3.4-2.1-1.5a7 7 0 0 0 .1-1Z" stroke-linejoin="round"/></svg></i>Настройки</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section screens-section" id="screens">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="kicker">03 — Экраны</span>
+      <h2>Десять экранов,<br>один язык</h2>
+      <p>Нажмите на макет, чтобы открыть его крупно. Все экраны — один стиль, один ритм, одна палитра; тёмная тема — десятый кадр.</p>
+    </div>
+
+    <div class="screens-grid" id="screens-grid">
+      <article class="screen-card reveal" data-index="0">
+        <button class="device" type="button" aria-label="Открыть макет: Сегодня">
+          <img src="mockups/01-today.png" alt="Экран «Сегодня»: кольцо калорий, макросы и лента приёмов пищи" decoding="async">
+        </button>
+        <div class="screen-head"><span class="num">01</span><h3>Сегодня</h3></div>
+        <p>Кольцо энергии, макросы и лента приёмов пищи. Статус карточки считывается без открытия.</p>
+        <div class="tags"><span class="tag">Hero-кольцо</span><span class="tag">Лента</span><span class="tag">FAB «Снять»</span></div>
+        <ul class="screen-notes" hidden>
+          <li>Кольцо 220 dp, трек 14 dp, градиент primary → secondary.</li>
+          <li>FAB «Снять» — единственное действие, всегда на одном месте.</li>
+          <li>Пустое состояние — иллюстрация и две кнопки: камера и галерея.</li>
+        </ul>
+      </article>
+
+      <article class="screen-card reveal" data-index="1">
+        <button class="device" type="button" aria-label="Открыть макет: Календарь">
+          <img src="mockups/02-calendar.png" alt="Экран «Календарь»: сетка месяца, точки полноты дня и тренд калорий" decoding="async">
+        </button>
+        <div class="screen-head"><span class="num">02</span><h3>Календарь</h3></div>
+        <p>Месяц в белой карточке, точки полноты дня и тренд калорий с линией цели. Тап по дню ведёт в ленту.</p>
+        <div class="tags"><span class="tag">Месяц</span><span class="tag">Тренд</span><span class="tag">Легенда</span></div>
+        <ul class="screen-notes" hidden>
+          <li>Полнота дня — точка под числом, а не заливка всей ячейки.</li>
+          <li>Тренд: столбики по ккал, пунктир цели, тап по дню.</li>
+          <li>Месяц живёт в карточке — сетка читается как объект.</li>
+        </ul>
+      </article>
+
+      <article class="screen-card reveal" data-index="2">
+        <button class="device" type="button" aria-label="Открыть макет: Приём пищи">
+          <img src="mockups/03-meal.png" alt="Экран приёма пищи: фото блюда, компоненты и итог КБЖУ" decoding="async">
+        </button>
+        <div class="screen-head"><span class="num">03</span><h3>Приём пищи</h3></div>
+        <p>Фото-hero, разбор по компонентам и итог КБЖУ. Тип кадра — сегментированный переключатель, действия — в строках.</p>
+        <div class="tags"><span class="tag">Фото-hero</span><span class="tag">Компоненты</span><span class="tag">Итого</span></div>
+        <ul class="screen-notes" hidden>
+          <li>Фото-hero 240 dp, радиус 24 dp.</li>
+          <li>Итог — изумрудная карточка с крупной цифрой.</li>
+          <li>Тип кадра — сегменты, удаление — в overflow-меню.</li>
+        </ul>
+      </article>
+
+      <article class="screen-card reveal" data-index="3">
+        <button class="device" type="button" aria-label="Открыть макет: Отчёт дня">
+          <img src="mockups/04-report.png" alt="Экран «Отчёт дня»: вердикт, энергия, состав, режим и комментарий" decoding="async">
+        </button>
+        <div class="screen-head"><span class="num">04</span><h3>Отчёт дня</h3></div>
+        <p>Вердикт первой карточкой, три блока с прогресс-барами, комментарий ИИ — отдельно и последним.</p>
+        <div class="tags"><span class="tag">Вердикт</span><span class="tag">Прогресс</span><span class="tag">Комментарий</span></div>
+        <ul class="screen-notes" hidden>
+          <li>Фон вердикта зависит от попадания в цель.</li>
+          <li>Три секции с прогресс-барами к цели.</li>
+          <li>Комментарий ИИ — последним, с кнопкой обновления.</li>
+        </ul>
+      </article>
+
+      <article class="screen-card reveal" data-index="4">
+        <button class="device" type="button" aria-label="Открыть макет: Настройки">
+          <img src="mockups/05-settings.png" alt="Экран «Настройки»: профиль, API-ключ, вечерний отчёт, цели, статистика" decoding="async">
+        </button>
+        <div class="screen-head"><span class="num">05</span><h3>Настройки</h3></div>
+        <p>Профиль, ключ, напоминания и цели — группами. Статус подключения — точка и текст, а не цветная плашка.</p>
+        <div class="tags"><span class="tag">Профиль</span><span class="tag">Группы</span><span class="tag">Switch</span></div>
+        <ul class="screen-notes" hidden>
+          <li>Профиль: инициалы, цель, «Изменить».</li>
+          <li>Группы: подключение, напоминания, цели, данные.</li>
+          <li>Статус ключа — точка и текст, без цветной плашки.</li>
+        </ul>
+      </article>
+
+      <article class="screen-card reveal" data-index="5">
+        <button class="device" type="button" aria-label="Открыть макет: Съёмка">
+          <img src="mockups/06-capture.png" alt="Экран съёмки: камера, рамка «вся тарелка в кадре», затвор" decoding="async">
+        </button>
+        <div class="screen-head"><span class="num">06</span><h3>Съёмка</h3></div>
+        <p>Полноэкранная камера, рамка «вся тарелка» и одно действие. После снимка — сразу назад в ленту.</p>
+        <div class="tags"><span class="tag">CameraX</span><span class="tag">Рамка</span><span class="tag">Затвор</span></div>
+        <ul class="screen-notes" hidden>
+          <li>Рамка «вся тарелка» гаснет после первого кадра.</li>
+          <li>Затвор 72 dp, галерея слева, вспышка справа.</li>
+          <li>После снимка — сразу в ленту, без диалогов.</li>
+        </ul>
+      </article>
+
+      <article class="screen-card reveal" data-index="6">
+        <button class="device" type="button" aria-label="Открыть макет: Онбординг, ключ">
+          <img src="mockups/07-onboarding-key.png" alt="Онбординг: подключение ИИ, поле ключа и кнопка проверки" decoding="async">
+        </button>
+        <div class="screen-head"><span class="num">07</span><h3>Онбординг · ключ</h3></div>
+        <p>Логотип, шаги 1 из 3, поле ключа и два способа вставки. Ошибки — человеческим текстом под кнопкой.</p>
+        <div class="tags"><span class="tag">3 шага</span><span class="tag">Ключ</span><span class="tag">CTA</span></div>
+        <ul class="screen-notes" hidden>
+          <li>Шаги 1–3 и одно обещание вместо стены текста.</li>
+          <li>Два равных способа: буфер обмена и файл.</li>
+          <li>Ошибки — баннер под кнопкой: ключ, сеть, сертификат.</li>
+        </ul>
+      </article>
+
+      <article class="screen-card reveal" data-index="7">
+        <button class="device" type="button" aria-label="Открыть макет: Онбординг, анкета">
+          <img src="mockups/08-onboarding-profile.png" alt="Онбординг: анкета, активность, дефицит и рассчитанная цель" decoding="async">
+        </button>
+        <div class="screen-head"><span class="num">08</span><h3>Онбординг · анкета</h3></div>
+        <p>Пол, возраст, активность и дефицит. Цель с Б/Ж/У появляется сразу, кнопка «Начать» — только при валидной анкете.</p>
+        <div class="tags"><span class="tag">Анкета</span><span class="tag">Активность</span><span class="tag">Цель</span></div>
+        <ul class="screen-notes" hidden>
+          <li>Прогресс сверху, назад — стрелкой.</li>
+          <li>Пол — сегменты, активность — карточки с подписями.</li>
+          <li>Цель считается сразу; CTA активна при валидной анкете.</li>
+        </ul>
+      </article>
+
+      <article class="screen-card reveal" data-index="8">
+        <button class="device" type="button" aria-label="Открыть макет: Статистика">
+          <img src="mockups/09-stats.png" alt="Экран «Статистика»: метрики, график правок и последние изменения" decoding="async">
+        </button>
+        <div class="screen-head"><span class="num">09</span><h3>Статистика</h3></div>
+        <p>Три метрики качества разбора и история правок. Экран локальный: данные не отправляются.</p>
+        <div class="tags"><span class="tag">Метрики</span><span class="tag">График</span><span class="tag">Локально</span></div>
+        <ul class="screen-notes" hidden>
+          <li>Три метрики: всего, исправлено, точность.</li>
+          <li>График правок и последние изменения.</li>
+          <li>Подпись: данные не отправляются.</li>
+        </ul>
+      </article>
+
+      <article class="screen-card reveal" data-index="9">
+        <button class="device" type="button" aria-label="Открыть макет: Сегодня, тёмная тема">
+          <img src="mockups/10-today-dark.png" alt="Экран «Сегодня» в тёмной теме" decoding="async">
+        </button>
+        <div class="screen-head"><span class="num">10</span><h3>Сегодня · тёмная</h3></div>
+        <p>Те же роли в тёмной палитре: фон уходит, изумруд светлеет, еда остаётся цветовым якорем.</p>
+        <div class="tags"><span class="tag">Dark</span><span class="tag">Те же роли</span><span class="tag">Контраст</span></div>
+        <ul class="screen-notes" hidden>
+          <li>Тёмная палитра использует те же роли M3.</li>
+          <li>Изумрудный светлеет до #7FD8B0.</li>
+          <li>Фотографии не затемняются — остаются цветовым якорем.</li>
+        </ul>
+      </article>
+
+      <article class="summary-tile reveal">
+        <div>
+          <span class="kicker">Итого</span>
+          <h3>Одна система.<br>Две темы.<br>Ноль сюрпризов.</h3>
+          <p>Все десять экранов собраны из одних токенов. Тёмная тема — не отдельный дизайн, а другая палитра той же системы: контраст, иерархия и ритм сохраняются.</p>
+          <div class="summary-list">
+            <div><b>12 ролей цвета</b><span>светлая и тёмная схемы</span></div>
+            <div><b>5 начертаний</b><span>Manrope 400–800, tnum</span></div>
+            <div><b>24–28 dp</b><span>радиусы карточек и полей</span></div>
+          </div>
+        </div>
+        <div class="summary-foot">
+          <span>Color roles M3</span>
+          <span>Manrope 400–800</span>
+          <span>Radius 24 / 28</span>
+          <span><a href="tokens.json">Открыть токены →</a></span>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="flows">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="kicker">04 — Сценарии</span>
+      <h2>Один путь —<br>от ключа до отчёта</h2>
+      <p>Основной сценарий укладывается в шесть шагов и не требует возврата в настройки.</p>
+    </div>
+    <div class="flow-rail reveal">
+      <div class="flow-step"><span class="dot">1</span><div><b>Ключ</b><span>подключение ИИ</span></div></div>
+      <span class="flow-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      <div class="flow-step"><span class="dot">2</span><div><b>Анкета</b><span>цель и дефицит</span></div></div>
+      <span class="flow-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      <div class="flow-step"><span class="dot">3</span><div><b>Сегодня</b><span>лента и норма</span></div></div>
+      <span class="flow-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      <div class="flow-step"><span class="dot">4</span><div><b>Съёмка</b><span>один кадр</span></div></div>
+      <span class="flow-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      <div class="flow-step"><span class="dot">5</span><div><b>Карточка</b><span>разбор и правка</span></div></div>
+      <span class="flow-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      <div class="flow-step"><span class="dot">6</span><div><b>Отчёт</b><span>вечерний вывод</span></div></div>
+    </div>
+    <div class="note-row">
+      <div class="note"><b>Общий элемент.</b> Фото блюда «перелетает» из карточки ленты в hero экрана блюда за 300 мс.</div>
+      <div class="note"><b>Один акцент.</b> FAB «Снять» всегда на одном месте и не спорит с навигацией.</div>
+      <div class="note"><b>Без диалогов.</b> После снимка приложение сразу возвращает в ленту — обработка идёт в фоне.</div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="build">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="kicker">05 — Внедрение</span>
+      <h2>От макета к Compose</h2>
+      <p>Токены переносятся в тему один в один, компоненты — в <code>ui/common</code>, экраны переверстываются без изменения логики и ViewModel.</p>
+    </div>
+    <div class="build-grid">
+      <div class="panel reveal">
+        <h3>Порядок работ</h3>
+        <p class="hint">Каждый шаг даёт видимый результат и не ломает текущие сценарии.</p>
+        <ul class="checklist">
+          <li class="check"><span class="tick">1</span><div><b>Тема и токены</b><span><code>Theme.kt</code> → полная ColorScheme, Manrope, Shapes 24/28/16.</span></div></li>
+          <li class="check"><span class="tick">2</span><div><b>Компоненты</b><span><code>Components.kt</code> → кольцо, макросы, строка приёма, статусы, пустые состояния.</span></div></li>
+          <li class="check"><span class="tick">3</span><div><b>Главные экраны</b><span><code>DayScreen</code>, <code>CalendarScreen</code>, <code>MealScreen</code>, <code>ReportScreen</code>.</span></div></li>
+          <li class="check"><span class="tick">4</span><div><b>Навигация и движение</b><span><code>FitAppBottomBar</code>, large top app bar, shared element фото.</span></div></li>
+          <li class="check"><span class="tick">5</span><div><b>Состояния и полировка</b><span>Скелетоны вместо спиннеров, empty/error, хаптик на затворе.</span></div></li>
+        </ul>
+        <div class="token-strip">
+          <span>background #F4F1E8</span>
+          <span>primary #0E6B4F</span>
+          <span>secondary #C8F26A</span>
+          <span>radius 24–28</span>
+          <span>gutter 20</span>
+        </div>
+      </div>
+      <div class="reveal">
+        <div class="code-card">
+          <div class="code-head"><span class="lights"><i></i><i></i><i></i></span>ui/theme/Theme.kt</div>
+<pre><span class="tok-k">private val</span> Light = lightColorScheme(
+    background = Color(<span class="tok-s">0xFFF4F1E8</span>),
+    onBackground = Color(<span class="tok-s">0xFF17211C</span>),
+    surface = Color(<span class="tok-s">0xFFFFFFFF</span>),
+    surfaceVariant = Color(<span class="tok-s">0xFFE9E5D9</span>),
+    primary = Color(<span class="tok-s">0xFF0E6B4F</span>),
+    onPrimary = Color(<span class="tok-s">0xFFFFFFFF</span>),
+    primaryContainer = Color(<span class="tok-s">0xFFCDEBDD</span>),
+    secondary = Color(<span class="tok-s">0xFFC8F26A</span>),
+    onSecondary = Color(<span class="tok-s">0xFF243300</span>),
+    tertiary = Color(<span class="tok-s">0xFFFFB77D</span>),
+    error = Color(<span class="tok-s">0xFFBA1A1A</span>),
+)
+
+<span class="tok-k">private val</span> Dark = darkColorScheme(
+    background = Color(<span class="tok-s">0xFF101613</span>),
+    surface = Color(<span class="tok-s">0xFF181F1B</span>),
+    primary = Color(<span class="tok-s">0xFF7FD8B0</span>),
+    onPrimary = Color(<span class="tok-s">0xFF003825</span>),
+)
+
+<span class="tok-c">// Manrope + табличные цифры: числа не «прыгают»</span>
+<span class="tok-k">private val</span> FitTypography = Typography(
+    displayLarge = TextStyle(
+        fontFamily = Manrope,
+        fontWeight = FontWeight.Bold,
+        fontSize = <span class="tok-f">57</span>.sp,
+        fontFeatureSettings = <span class="tok-s">"tnum"</span>,
+    ),
+)
+
+<span class="tok-k">@Composable fun</span> FitAppTheme(
+    darkTheme: Boolean = isSystemInDarkTheme(),
+    content: <span class="tok-f">@Composable</span> () -&gt; Unit,
+) = MaterialTheme(
+    colorScheme = <span class="tok-k">if</span> (darkTheme) Dark <span class="tok-k">else</span> Light,
+    typography = FitTypography,
+    shapes = FitShapes,
+    content = content,
+)</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer-top">
+      <h2>FitApp<span style="color:var(--lime)">.</span></h2>
+      <div class="footer-links">
+        <a href="README.md">Дизайн-документ</a>
+        <a href="tokens.json">Токены</a>
+        <a href="mockups/">Все макеты</a>
+        <a href="#top">Наверх ↑</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>Концепт-редизайн · Material Design 3 · 2026</span>
+      <span>Макеты: qwen-image-3.0-pro · Спецификация: README.md</span>
+    </div>
+  </div>
+</footer>
+
+<dialog class="lb" id="lightbox" aria-label="Просмотр макета">
+  <div class="lb-panel">
+    <button class="lb-close" type="button" aria-label="Закрыть">×</button>
+    <div class="lb-media"><img id="lb-img" src="" alt=""></div>
+    <div class="lb-body">
+      <span class="lb-num" id="lb-num"></span>
+      <h3 id="lb-title"></h3>
+      <p id="lb-desc"></p>
+      <div class="tags" id="lb-tags"></div>
+      <ul class="lb-notes" id="lb-notes"></ul>
+      <div class="lb-nav">
+        <button type="button" id="lb-prev" aria-label="Предыдущий экран">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M11 18l-6-6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <span class="lb-count" id="lb-count"></span>
+        <button type="button" id="lb-next" aria-label="Следующий экран">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<script>
+(function () {
+  const root = document.documentElement;
+  const toggle = document.getElementById('theme-toggle');
+  const saved = localStorage.getItem('fitapp-theme');
+  if (saved) root.dataset.theme = saved;
+  toggle.addEventListener('click', function () {
+    const next = root.dataset.theme === 'dark' ? 'light' : 'dark';
+    root.dataset.theme = next;
+    localStorage.setItem('fitapp-theme', next);
+  });
+
+  const cards = Array.from(document.querySelectorAll('.screen-card'));
+  const dialog = document.getElementById('lightbox');
+  const img = document.getElementById('lb-img');
+  const num = document.getElementById('lb-num');
+  const title = document.getElementById('lb-title');
+  const desc = document.getElementById('lb-desc');
+  const tags = document.getElementById('lb-tags');
+  const count = document.getElementById('lb-count');
+  let current = 0;
+
+  function fill(i) {
+    current = (i + cards.length) % cards.length;
+    const card = cards[current];
+    const thumb = card.querySelector('img');
+    const tagEls = card.querySelectorAll('.tag');
+    img.src = thumb.getAttribute('src');
+    img.alt = thumb.getAttribute('alt') || '';
+    num.textContent = 'Экран ' + String(current + 1).padStart(2, '0');
+    title.textContent = card.querySelector('h3').textContent;
+    desc.textContent = card.querySelector('p').textContent;
+    tags.innerHTML = '';
+    const notesBox = document.getElementById('lb-notes');
+    notesBox.innerHTML = '';
+    card.querySelectorAll('.screen-notes li').forEach(function (n) {
+      const li = document.createElement('li');
+      li.textContent = n.textContent;
+      notesBox.appendChild(li);
+    });
+    tagEls.forEach(function (t) {
+      const s = document.createElement('span');
+      s.className = 'tag';
+      s.textContent = t.textContent;
+      tags.appendChild(s);
+    });
+    count.textContent = (current + 1) + ' / ' + cards.length;
+  }
+
+  cards.forEach(function (card, i) {
+    card.querySelector('.device').addEventListener('click', function () {
+      fill(i);
+      dialog.showModal();
+    });
+  });
+
+  document.querySelector('.lb-close').addEventListener('click', function () { dialog.close(); });
+  document.getElementById('lb-prev').addEventListener('click', function () { fill(current - 1); });
+  document.getElementById('lb-next').addEventListener('click', function () { fill(current + 1); });
+  dialog.addEventListener('click', function (e) {
+    if (e.target === dialog) dialog.close();
+  });
+  dialog.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowRight') { e.preventDefault(); fill(current + 1); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); fill(current - 1); }
+  });
+
+  const reveals = document.querySelectorAll('.reveal');
+  if ('IntersectionObserver' in window && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+    reveals.forEach(function (el) { io.observe(el); });
+    setTimeout(function () {
+      reveals.forEach(function (el) { el.classList.add('is-visible'); });
+    }, 1400);
+  } else {
+    reveals.forEach(function (el) { el.classList.add('is-visible'); });
+  }
+})();
+</script>
+</body>
+</html>

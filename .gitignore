@@ -11,3 +11,7 @@ build/
 *.iml
 captures/
 .cxx/
+
+# Локальные артефакты сборки и DSH
+.android-home/
+.dsh/

@@ -40,6 +40,12 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
     val stats: StateFlow<MealStats?> = fitApp.mealRepository.observeMealStats()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
+    val editDays: StateFlow<List<ru.fitapp.data.db.EditDayCount>> = fitApp.mealRepository.observeEditDays()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    val recentEdits: StateFlow<List<ru.fitapp.data.db.RecentEdit>> = fitApp.mealRepository.observeRecentEdits()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
     init {
         refreshKeyState()
     }

@@ -15,6 +15,7 @@ import kotlinx.coroutines.launch
 import ru.fitapp.FitAppApplication
 import ru.fitapp.core.LogTags
 import ru.fitapp.data.db.MealWithItems
+import ru.fitapp.domain.DailyTargets
 import ru.fitapp.ui.MealCreator
 
 /**
@@ -31,6 +32,10 @@ class DayViewModel(app: Application, val date: LocalDate) : AndroidViewModel(app
 
     val meals: StateFlow<List<MealWithItems>> = fitApp.mealRepository.observeDay(date)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /** Цель дня из анкеты — для кольца калорий и чипов макросов. */
+    val targets: StateFlow<DailyTargets?> = fitApp.profileRepository.targets
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     private val _importing = MutableStateFlow(false)
     val importing: StateFlow<Boolean> = _importing.asStateFlow()
