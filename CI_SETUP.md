@@ -77,6 +77,16 @@ cd C:\work\fitapp; .\gradlew.bat testDebugUnitTest
 
 **`android.overridePathCheck=true`** лежит в глобальном `~/.gradle/gradle.properties` — это обход проверки AGP на не-ASCII путь. Без него сборка на этой машине не стартует.
 
+## Текущее состояние
+
+Настроено и проверено на `AlexDevyatov/FitApp`:
+
+- CI-прогон `push в main` — зелёный (~4 мин)
+- Release-прогон `workflow_dispatch` — зелёный: секреты прочитаны, keystore декодирован, `apksigner verify` подтвердил подпись
+- Релиз [v0.1.0](https://github.com/AlexDevyatov/FitApp/releases/tag/v0.1.0) опубликован с `app-release.apk` и `app-release.aab`
+
+Секреты `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD` уже добавлены в репозиторий.
+
 ## Проверка статуса
 
 - CI: вкладка **Actions** → workflow **CI**
