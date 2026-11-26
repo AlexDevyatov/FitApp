@@ -17,3 +17,4 @@ captures/
 # Локальные артефакты сборки и DSH
 .android-home/
 .dsh/
+artifacts/release/
