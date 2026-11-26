@@ -299,8 +299,8 @@
 
     <!-- Оформление -->
     <string name="settings_group_appearance">Оформление</string>
-    <string name="settings_theme_title">Тёмная тема</string>
-    <string name="settings_theme_system">Как в системе</string>
+    <string name="settings_theme_title">Тема оформления</string>
+    <string name="settings_theme_system">Система</string>
     <string name="settings_theme_light">Светлая</string>
     <string name="settings_theme_dark">Тёмная</string>
 

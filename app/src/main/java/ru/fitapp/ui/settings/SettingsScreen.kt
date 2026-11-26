@@ -60,6 +60,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -189,29 +191,34 @@ fun SettingsScreen(navController: NavController) {
                         SettingsStore.THEME_MODE_DARK -> stringResource(R.string.settings_theme_dark)
                         else -> stringResource(R.string.settings_theme_system)
                     },
-                    trailing = {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            ThemeChip(
-                                selected = darkThemeMode == SettingsStore.THEME_MODE_SYSTEM,
-                                label = stringResource(R.string.settings_theme_system),
-                                onClick = { vm.setDarkThemeMode(SettingsStore.THEME_MODE_SYSTEM) },
-                            )
-                            ThemeChip(
-                                selected = darkThemeMode == SettingsStore.THEME_MODE_LIGHT,
-                                label = stringResource(R.string.settings_theme_light),
-                                onClick = { vm.setDarkThemeMode(SettingsStore.THEME_MODE_LIGHT) },
-                            )
-                            ThemeChip(
-                                selected = darkThemeMode == SettingsStore.THEME_MODE_DARK,
-                                label = stringResource(R.string.settings_theme_dark),
-                                onClick = { vm.setDarkThemeMode(SettingsStore.THEME_MODE_DARK) },
-                            )
-                        }
-                    },
                 )
+                // Чипсы выбора темы живут отдельной строкой на всю ширину карточки:
+                // в trailing они делили место с заголовком и текст сжимался до одной буквы в строке.
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 20.dp, end = 20.dp, bottom = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    ThemeChip(
+                        selected = darkThemeMode == SettingsStore.THEME_MODE_SYSTEM,
+                        label = stringResource(R.string.settings_theme_system),
+                        onClick = { vm.setDarkThemeMode(SettingsStore.THEME_MODE_SYSTEM) },
+                        modifier = Modifier.weight(1f),
+                    )
+                    ThemeChip(
+                        selected = darkThemeMode == SettingsStore.THEME_MODE_LIGHT,
+                        label = stringResource(R.string.settings_theme_light),
+                        onClick = { vm.setDarkThemeMode(SettingsStore.THEME_MODE_LIGHT) },
+                        modifier = Modifier.weight(1f),
+                    )
+                    ThemeChip(
+                        selected = darkThemeMode == SettingsStore.THEME_MODE_DARK,
+                        label = stringResource(R.string.settings_theme_dark),
+                        onClick = { vm.setDarkThemeMode(SettingsStore.THEME_MODE_DARK) },
+                        modifier = Modifier.weight(1f),
+                    )
+                }
             }
 
             SettingsGroup(title = stringResource(R.string.settings_group_reminders)) {
@@ -456,22 +463,27 @@ private fun ThemeChip(
     selected: Boolean,
     label: String,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val scheme = MaterialTheme.colorScheme
     Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(20.dp))
+        modifier = modifier
+            .height(36.dp)
+            .clip(RoundedCornerShape(999.dp))
             .background(
                 if (selected) scheme.primary else scheme.surfaceVariant,
             )
             .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 6.dp),
+            .padding(horizontal = 8.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             label,
             style = MaterialTheme.typography.labelMedium,
             color = if (selected) scheme.onPrimary else scheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center,
         )
     }
 }
