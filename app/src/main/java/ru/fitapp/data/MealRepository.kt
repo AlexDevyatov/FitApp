@@ -8,6 +8,7 @@ import java.util.UUID
 import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import ru.fitapp.core.LogTags
 import ru.fitapp.core.logExcerpt
 import ru.fitapp.data.db.DayDao
@@ -22,6 +23,7 @@ import ru.fitapp.data.db.MealStatus
 import ru.fitapp.data.db.MealWithItems
 import ru.fitapp.data.db.RecentEdit
 import ru.fitapp.domain.AnalyzedItem
+import ru.fitapp.domain.DayHistory
 import ru.fitapp.domain.FrameKind
 
 /**
@@ -48,6 +50,26 @@ class MealRepository(
 
     fun observeMealsInRange(from: LocalDate, to: LocalDate) =
         mealDao.observeRange(from.toString(), to.toString())
+
+    /**
+     * Контекст недели для отчёта: среднее по дням с готовыми карточками и вчерашний день.
+     * Пустые дни и дни без DONE-карточек в среднее не попадают — иначе «отпуск» выглядел бы дефицитом.
+     */
+    fun observeHistory(date: LocalDate, days: Long = 7): Flow<DayHistory> =
+        mealDao.observeDayStats(date.minusDays(days).toString(), date.minusDays(1).toString())
+            .map { stats ->
+                val withData = stats.filter { it.doneCount > 0 }
+                val avg = if (withData.isEmpty()) {
+                    null
+                } else {
+                    (withData.sumOf { it.totalKcal } / withData.size).roundToInt()
+                }
+                val prev = stats
+                    .firstOrNull { it.date == date.minusDays(1).toString() && it.doneCount > 0 }
+                    ?.totalKcal
+                    ?.roundToInt()
+                DayHistory(avgKcal = avg, daysWithData = withData.size, prevDayKcal = prev)
+            }
 
     suspend fun getMeal(mealId: String): MealEntity? = mealDao.getById(mealId)
 

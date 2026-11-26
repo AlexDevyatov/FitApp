@@ -1,7 +1,10 @@
 package ru.fitapp.ui.settings
 
 import android.Manifest
+import android.content.Context
+import android.content.Intent
 import android.os.Build
+import android.provider.Settings
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -77,6 +80,7 @@ import ru.fitapp.ui.common.SettingsGroup
 import ru.fitapp.ui.common.SettingsRow
 import ru.fitapp.ui.factoryOf
 import ru.fitapp.ui.fitApp
+import ru.fitapp.work.ReportNotifier
 
 /** Тег уведомлений: решение пользователя по POST_NOTIFICATIONS. */
 private const val TAG = LogTags.PUSH
@@ -98,12 +102,10 @@ fun SettingsScreen(navController: NavController) {
     val snackbarHostState = remember { SnackbarHostState() }
     var showClearKeyDialog by remember { mutableStateOf(false) }
     var showHourDialog by remember { mutableStateOf(false) }
-    var notificationDenied by remember { mutableStateOf(false) }
 
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission(),
     ) { granted ->
-        notificationDenied = !granted
         Log.i(TAG, "push: пользователь ответил на запрос POST_NOTIFICATIONS granted=$granted")
         if (!granted) {
             Log.w(TAG, "push: уведомления запрещены системой — вечерний отчёт не покажется")
@@ -225,13 +227,12 @@ fun SettingsScreen(navController: NavController) {
                 SettingsRow(
                     icon = Icons.Filled.Notifications,
                     title = stringResource(R.string.settings_push_title),
-                    subtitle = stringResource(R.string.settings_push_enabled_hint),
+                    subtitle = stringResource(R.string.settings_push_enabled_hint, pushHour),
                     trailing = {
                         Switch(
                             checked = pushEnabled,
                             onCheckedChange = { enabled ->
                                 if (!enabled) {
-                                    notificationDenied = false
                                     vm.setPushEnabled(false)
                                 } else if (
                                     Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
@@ -263,13 +264,19 @@ fun SettingsScreen(navController: NavController) {
                         },
                     )
                 }
-                if (notificationDenied) {
+                if (pushEnabled && !ReportNotifier.canPostNotifications(context)) {
                     Text(
                         stringResource(R.string.settings_push_permission_denied),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.error,
                         modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
                     )
+                    TextButton(
+                        onClick = { openNotificationSettings(context) },
+                        modifier = Modifier.padding(start = 8.dp, bottom = 4.dp),
+                    ) {
+                        Text(stringResource(R.string.settings_push_permission_action))
+                    }
                 }
             }
 
@@ -398,6 +405,15 @@ fun SettingsScreen(navController: NavController) {
             },
         )
     }
+}
+
+/** Системные настройки уведомлений приложения: единственный путь после отказа в разрешении. */
+private fun openNotificationSettings(context: Context) {
+    val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+        .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    runCatching { context.startActivity(intent) }
+        .onFailure { Log.w(TAG, "push: системные настройки уведомлений не открылись", it) }
 }
 
 @Composable

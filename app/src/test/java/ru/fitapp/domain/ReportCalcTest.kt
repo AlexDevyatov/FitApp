@@ -14,7 +14,7 @@ class ReportCalcTest {
     private val zone: ZoneId = ZoneOffset.UTC
     private val targets = DailyTargets(kcal = 2000, proteinG = 128, fatG = 59, carbsG = 229)
 
-    private fun epochMs(hour: Int, minute: Int): Long =
+    private fun epochMs(hour: Int, minute: Int = 0): Long =
         LocalDateTime.of(2025, 3, 10, hour, minute).toInstant(ZoneOffset.UTC).toEpochMilli()
 
     private fun meal(kcal: Double, hour: Int, minute: Int = 0) = ReportMeal(
@@ -160,5 +160,72 @@ class ReportCalcTest {
         val interval = ReportCalc.interval(1000.0)
         assertEquals(700.0, interval.low, 1e-9)
         assertEquals(1300.0, interval.high, 1e-9)
+    }
+
+    // --- разрывы с целью: то, из чего строятся советы ---
+
+    @Test
+    fun `gap and percent describe distance to target`() {
+        // 3 приёма по 500 = 1500 ккал при цели 2000 → не хватает 500 (75% цели)
+        val report = ReportCalc.computeDay(List(3) { meal(500.0, 12) }, 0, targets, zone)
+        assertEquals(500.0, report.energy.gapKcal, 1e-9)
+        assertEquals(75, report.energy.percentOfTarget)
+        // белок 60 г → до 128 не хватает 68
+        assertEquals(68.0, report.protein.gapG, 1e-9)
+    }
+
+    @Test
+    fun `fiber and sugar targets derive from calorie target`() {
+        assertEquals(28, ReportCalc.fiberTargetG(2000)) // 14 г на 1000 ккал
+        assertEquals(50, ReportCalc.sugarLimitG(2000)) // 10% калорий
+        assertEquals(35, ReportCalc.fiberTargetG(2500))
+        assertEquals(63, ReportCalc.sugarLimitG(2500))
+    }
+
+    @Test
+    fun `fiber verdict is below when whole interval below recommendation`() {
+        // 3 приёма по 5 г клетчатки = 15, интервал 10.5..19.5 при цели 28
+        val report = ReportCalc.computeDay(List(3) { meal(500.0, 12) }, 0, targets, zone)
+        assertEquals(NutrientVerdict.BELOW, report.fiberVerdict)
+        assertTrue(report.fiberGapG > 0)
+    }
+
+    @Test
+    fun `sugar verdict is above only when whole interval above limit`() {
+        fun sweetMeal(sugar: Double) = ReportMeal(
+            takenAtEpochMs = epochMs(12),
+            items = listOf(
+                ReportItem(
+                    kcal = 500.0,
+                    proteinG = 20.0,
+                    fatG = 10.0,
+                    carbsG = 60.0,
+                    fiberG = 5.0,
+                    sugarG = sugar,
+                    ultraProcessed = false,
+                ),
+            ),
+        )
+        // 3 приёма по 40 г сахара = 120, интервал 84..156 при лимите 50
+        val high = ReportCalc.computeDay(List(3) { sweetMeal(40.0) }, 0, targets, zone)
+        assertEquals(LimitVerdict.ABOVE, high.sugarVerdict)
+        // 3 приёма по 10 г = 30, интервал 21..39 при лимите 50
+        val within = ReportCalc.computeDay(List(3) { sweetMeal(10.0) }, 0, targets, zone)
+        assertEquals(LimitVerdict.WITHIN, within.sugarVerdict)
+    }
+
+    @Test
+    fun `ultra processed share is computed from items`() {
+        val report = ReportCalc.computeDay(List(3) { meal(500.0, 12) }, 0, targets, zone)
+        assertEquals(0.0, report.ultraProcessedShare, 1e-9)
+        assertEquals(3, report.composition.totalItems)
+    }
+
+    @Test
+    fun `history is carried into the report`() {
+        val history = DayHistory(avgKcal = 1800, daysWithData = 5, prevDayKcal = 1900)
+        val report = ReportCalc.computeDay(listOf(meal(500.0, 12)), 0, targets, zone, history)
+        assertEquals(history, report.history)
+        assertTrue(report.history.hasData)
     }
 }

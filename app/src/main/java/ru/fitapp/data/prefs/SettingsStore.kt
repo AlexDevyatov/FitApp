@@ -33,6 +33,13 @@ class SettingsStore(context: Context) {
         dataStore.data.map { (it[KEY_PUSH_HOUR] ?: DEFAULT_PUSH_HOUR).coerceIn(0, 23) }
 
     /**
+     * Спрашивали ли разрешение на уведомления. Нужно, чтобы не показывать
+     * системный диалог при каждом запуске после отказа.
+     */
+    val notificationAsked: Flow<Boolean> =
+        dataStore.data.map { it[KEY_NOTIFICATION_ASKED] ?: false }
+
+    /**
      * Тема оформления: 0 = как в системе, 1 = светлая, 2 = тёмная.
      * Значение по умолчанию — 0 (следовать системе).
      */
@@ -53,6 +60,11 @@ class SettingsStore(context: Context) {
         val clamped = hour.coerceIn(0, 23)
         dataStore.edit { it[KEY_PUSH_HOUR] = clamped }
         Log.i(TAG, "settings: push_hour=$clamped")
+    }
+
+    suspend fun setNotificationAsked(asked: Boolean) {
+        dataStore.edit { it[KEY_NOTIFICATION_ASKED] = asked }
+        Log.i(TAG, "settings: notification_asked=$asked")
     }
 
     suspend fun setDarkThemeMode(mode: Int) {
@@ -78,6 +90,7 @@ class SettingsStore(context: Context) {
         private val KEY_ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
         private val KEY_PUSH_ENABLED = booleanPreferencesKey("push_enabled")
         private val KEY_PUSH_HOUR = intPreferencesKey("push_hour")
+        private val KEY_NOTIFICATION_ASKED = booleanPreferencesKey("notification_asked")
         private val KEY_DARK_THEME_MODE = intPreferencesKey("dark_theme_mode")
     }
 }

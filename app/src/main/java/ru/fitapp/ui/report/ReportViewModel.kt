@@ -18,15 +18,17 @@ import ru.fitapp.FitAppApplication
 import ru.fitapp.ai.ReportTextSanitizer
 import ru.fitapp.core.LogTags
 import ru.fitapp.data.db.MealStatus
+import ru.fitapp.domain.Advice
 import ru.fitapp.domain.DayReport
+import ru.fitapp.domain.NutritionAdvice
 import ru.fitapp.domain.ReportCalc
 import ru.fitapp.work.DayReportData
 
 /**
- * Отчёт дня (§8, §9): цифры — только из domain/ReportCalc, текст — от LLM,
- * но показывается лишь прошедший ReportTextSanitizer (иначе fallback).
+ * Отчёт дня (§8, §9): цифры — только из domain/ReportCalc, советы — из domain/NutritionAdvice,
+ * текст — от LLM, но показывается лишь прошедший ReportTextSanitizer (иначе fallback).
  *
- * Логи (tag `FitAppReport`): входные данные расчёта, вердикты и источник текста
+ * Логи (tag `FitAppReport`): входные данные расчёта, вердикты, количество советов и источник текста
  * (модель или fallback). Сами числа отчёта повторяют то, что видит пользователь.
  */
 class ReportViewModel(app: Application, private val date: LocalDate) : AndroidViewModel(app) {
@@ -35,6 +37,7 @@ class ReportViewModel(app: Application, private val date: LocalDate) : AndroidVi
 
     data class ReportUiState(
         val report: DayReport? = null,
+        val advice: List<Advice> = emptyList(),
         val targetsMissing: Boolean = false,
         val hasDoneMeals: Boolean = false,
         val text: String? = null,
@@ -49,12 +52,15 @@ class ReportViewModel(app: Application, private val date: LocalDate) : AndroidVi
             combine(
                 fitApp.mealRepository.observeDay(date),
                 fitApp.profileRepository.targets,
-            ) { meals, targets -> meals to targets }
-                .collect { (meals, targets) ->
+                fitApp.mealRepository.observeHistory(date),
+            ) { meals, targets, history -> Triple(meals, targets, history) }
+                .collect { (meals, targets, history) ->
                     if (targets == null) {
                         // Без анкеты отчёт не строится — экран выглядит «пустым» без причины.
                         Log.w(TAG, "report date=$date: целей нет (анкета не заполнена), расчёт пропущен")
-                        _state.update { it.copy(report = null, targetsMissing = true, hasDoneMeals = false) }
+                        _state.update {
+                            it.copy(report = null, advice = emptyList(), targetsMissing = true, hasDoneMeals = false)
+                        }
                     } else {
                         val doneCount = meals.count { it.meal.status == MealStatus.DONE }
                         val failedCount = DayReportData.failedCount(meals)
@@ -62,7 +68,9 @@ class ReportViewModel(app: Application, private val date: LocalDate) : AndroidVi
                             doneMeals = DayReportData.toReportMeals(meals),
                             failedCount = failedCount,
                             targets = targets,
+                            history = history,
                         )
+                        val advice = NutritionAdvice.build(report)
                         Log.i(
                             TAG,
                             "report date=$date: карточек=${meals.size} done=$doneCount failed=$failedCount " +
@@ -70,12 +78,16 @@ class ReportViewModel(app: Application, private val date: LocalDate) : AndroidVi
                                 "kcal=[${report.energy.interval.low.roundToInt()}..${report.energy.interval.high.roundToInt()}] " +
                                 "target=${report.energy.targetKcal} energy=${report.energy.verdict} " +
                                 "protein=${report.protein.verdict} fat=${report.fat.verdict} " +
-                                "carbs=${report.carbs.verdict} ultra=${report.composition.ultraProcessedItems}/" +
-                                "${report.composition.totalItems}",
+                                "carbs=${report.carbs.verdict} fiber=${report.fiberVerdict} " +
+                                "sugar=${report.sugarVerdict} ultra=${report.composition.ultraProcessedItems}/" +
+                                "${report.composition.totalItems} " +
+                                "history_avg=${history.avgKcal ?: "нет"} history_days=${history.daysWithData} " +
+                                "advice=${advice.joinToString(",") { it.id }}",
                         )
                         _state.update {
                             it.copy(
                                 report = report,
+                                advice = advice,
                                 targetsMissing = false,
                                 hasDoneMeals = meals.any { meal -> meal.meal.status == MealStatus.DONE },
                             )

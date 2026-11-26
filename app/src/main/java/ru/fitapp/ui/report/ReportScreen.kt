@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Shield
@@ -39,17 +40,20 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import java.time.LocalDate
-import kotlin.math.min
+import kotlin.math.abs
 import kotlin.math.roundToInt
 import ru.fitapp.R
+import ru.fitapp.domain.Advice
+import ru.fitapp.domain.AdviceTone
 import ru.fitapp.domain.DayReport
 import ru.fitapp.domain.EnergyVerdict
+import ru.fitapp.domain.LimitVerdict
 import ru.fitapp.domain.NutrientBlock
 import ru.fitapp.domain.NutrientVerdict
 import ru.fitapp.domain.RegimenBlock
@@ -62,8 +66,8 @@ import ru.fitapp.ui.factoryOf
 import ru.fitapp.ui.fitApp
 
 /**
- * Отчёт дня: вердикт первой карточкой, затем три блока с прогресс-барами,
- * текст модели — последним и не спорит с цифрами.
+ * Отчёт дня: вердикт первой карточкой, затем конкретные советы, затем три блока с разрывами
+ * до целей и текст модели — последним, чтобы он не спорил с цифрами.
  */
 @Composable
 fun ReportScreen(date: LocalDate, onBack: () -> Unit) {
@@ -120,6 +124,9 @@ fun ReportScreen(date: LocalDate, onBack: () -> Unit) {
                     if (report.littleData) {
                         item(key = "little-data") { LittleDataBanner() }
                     }
+                    if (state.advice.isNotEmpty()) {
+                        item(key = "advice") { AdviceCard(state.advice) }
+                    }
                     item(key = "energy") { EnergyCard(report) }
                     item(key = "composition") { CompositionCard(report) }
                     item(key = "regimen") { RegimenCard(report.regimen) }
@@ -151,6 +158,11 @@ private fun VerdictCard(report: DayReport) {
         EnergyVerdict.LIKELY_EXCESS -> Icons.Filled.WarningAmber
         EnergyVerdict.WITHIN_UNCERTAINTY -> Icons.Filled.Shield
     }
+    val explanation = when (verdict) {
+        EnergyVerdict.LIKELY_DEFICIT -> stringResource(R.string.report_verdict_deficit_explain)
+        EnergyVerdict.LIKELY_EXCESS -> stringResource(R.string.report_verdict_excess_explain)
+        EnergyVerdict.WITHIN_UNCERTAINTY -> stringResource(R.string.report_verdict_uncertain_explain)
+    }
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(28.dp),
@@ -173,6 +185,11 @@ private fun VerdictCard(report: DayReport) {
                 color = content.copy(alpha = 0.9f),
             )
             Text(
+                explanation,
+                style = MaterialTheme.typography.bodySmall,
+                color = content.copy(alpha = 0.85f),
+            )
+            Text(
                 stringResource(R.string.report_target_kcal, report.energy.targetKcal),
                 style = MaterialTheme.typography.bodySmall,
                 color = content.copy(alpha = 0.8f),
@@ -184,7 +201,18 @@ private fun VerdictCard(report: DayReport) {
 @Composable
 private fun EnergyCard(report: DayReport) {
     val scheme = MaterialTheme.colorScheme
-    val mid = (report.energy.interval.low + report.energy.interval.high) / 2.0
+    val gap = report.energy.gapKcal
+    val gapText = when (report.energy.verdict) {
+        EnergyVerdict.LIKELY_DEFICIT -> stringResource(
+            R.string.report_energy_gap_below,
+            abs(gap).roundToInt(),
+        )
+        EnergyVerdict.LIKELY_EXCESS -> stringResource(
+            R.string.report_energy_gap_above,
+            abs(gap).roundToInt(),
+        )
+        EnergyVerdict.WITHIN_UNCERTAINTY -> stringResource(R.string.report_energy_gap_none)
+    }
     SectionCard(
         title = stringResource(R.string.report_block_energy),
         subtitle = stringResource(R.string.report_target_kcal, report.energy.targetKcal),
@@ -201,17 +229,48 @@ private fun EnergyCard(report: DayReport) {
                 modifier = Modifier.weight(1f),
             )
             Text(
-                stringResource(R.string.report_percent_target, (mid / report.energy.targetKcal * 100).roundToInt()),
+                stringResource(R.string.report_percent_target, report.energy.percentOfTarget),
                 style = MaterialTheme.typography.labelMedium,
                 color = scheme.onSurfaceVariant,
             )
         }
-        ThinProgress((mid / report.energy.targetKcal).toFloat())
-        Text(
-            report.energy.verdict.label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = scheme.onSurfaceVariant,
-        )
+        ThinProgress((report.energy.midKcal / report.energy.targetKcal).toFloat())
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                report.energy.verdict.label,
+                style = MaterialTheme.typography.bodyMedium,
+                color = scheme.onSurfaceVariant,
+                modifier = Modifier.weight(1f),
+            )
+            Text(
+                gapText,
+                style = MaterialTheme.typography.labelMedium,
+                color = if (report.energy.verdict == EnergyVerdict.LIKELY_EXCESS) {
+                    scheme.tertiary
+                } else {
+                    scheme.onSurfaceVariant
+                },
+            )
+        }
+        val history = report.history
+        val avg = history.avgKcal
+        if (avg != null && history.daysWithData > 0) {
+            HorizontalDivider(color = scheme.outlineVariant)
+            Text(
+                if (history.prevDayKcal != null) {
+                    stringResource(
+                        R.string.report_history_line,
+                        history.prevDayKcal,
+                        history.daysWithData,
+                        avg,
+                    )
+                } else {
+                    stringResource(R.string.report_history_no_prev, history.daysWithData, avg)
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = scheme.onSurfaceVariant,
+            )
+        }
     }
 }
 
@@ -225,26 +284,42 @@ private fun CompositionCard(report: DayReport) {
         HorizontalDivider(color = scheme.outlineVariant)
         NutrientRow(stringResource(R.string.report_carbs), report.carbs)
         HorizontalDivider(color = scheme.outlineVariant)
-        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            Text(
-                stringResource(
-                    R.string.report_fiber_value,
-                    fmt(report.composition.fiberInterval.low),
-                    fmt(report.composition.fiberInterval.high),
-                ),
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.weight(1f),
-            )
-            Text(
-                stringResource(
-                    R.string.report_sugar_value,
-                    fmt(report.composition.sugarInterval.low),
-                    fmt(report.composition.sugarInterval.high),
-                ),
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.weight(1f),
-            )
-        }
+        MetricRow(
+            name = stringResource(R.string.report_fiber_row),
+            low = report.composition.fiberInterval.low,
+            high = report.composition.fiberInterval.high,
+            targetText = stringResource(R.string.report_fiber_target, report.fiberTargetG),
+            deltaText = when (report.fiberVerdict) {
+                NutrientVerdict.BELOW -> stringResource(
+                    R.string.report_nutrient_gap_below,
+                    abs(report.fiberGapG).roundToInt(),
+                )
+                NutrientVerdict.ABOVE -> stringResource(
+                    R.string.report_nutrient_gap_above,
+                    abs(report.fiberGapG).roundToInt(),
+                )
+                NutrientVerdict.UNDETERMINED -> stringResource(R.string.report_nutrient_gap_none)
+            },
+            progress = (report.composition.fiberInterval.mid / report.fiberTargetG).toFloat(),
+            over = false,
+        )
+        HorizontalDivider(color = scheme.outlineVariant)
+        MetricRow(
+            name = stringResource(R.string.report_sugar_row),
+            low = report.composition.sugarInterval.low,
+            high = report.composition.sugarInterval.high,
+            targetText = stringResource(R.string.report_sugar_limit, report.sugarLimitG),
+            deltaText = when (report.sugarVerdict) {
+                LimitVerdict.ABOVE -> stringResource(
+                    R.string.report_sugar_gap_above,
+                    abs(report.sugarOverLimitG).roundToInt(),
+                )
+                LimitVerdict.WITHIN -> stringResource(R.string.report_sugar_gap_within)
+                LimitVerdict.UNDETERMINED -> stringResource(R.string.report_sugar_gap_undetermined)
+            },
+            progress = (report.composition.sugarInterval.mid / report.sugarLimitG).toFloat(),
+            over = report.sugarVerdict == LimitVerdict.ABOVE,
+        )
         Text(
             stringResource(
                 R.string.report_ultra_value,
@@ -259,38 +334,105 @@ private fun CompositionCard(report: DayReport) {
 
 @Composable
 private fun NutrientRow(name: String, block: NutrientBlock) {
+    val gap = block.gapG
+    MetricRow(
+        name = name,
+        low = block.interval.low,
+        high = block.interval.high,
+        targetText = stringResource(R.string.report_target_short, block.targetG),
+        deltaText = when (block.verdict) {
+            NutrientVerdict.BELOW -> stringResource(R.string.report_nutrient_gap_below, abs(gap).roundToInt())
+            NutrientVerdict.ABOVE -> stringResource(R.string.report_nutrient_gap_above, abs(gap).roundToInt())
+            NutrientVerdict.UNDETERMINED -> stringResource(R.string.report_nutrient_gap_none)
+        },
+        progress = (block.interval.mid / block.targetG).toFloat(),
+        over = block.verdict == NutrientVerdict.ABOVE,
+    )
+}
+
+/** Строка состава: значение, цель/лимит, тонкий прогресс и разрыв словами. */
+@Composable
+private fun MetricRow(
+    name: String,
+    low: Double,
+    high: Double,
+    targetText: String,
+    deltaText: String,
+    progress: Float,
+    over: Boolean,
+) {
     val scheme = MaterialTheme.colorScheme
-    val mid = (block.interval.low + block.interval.high) / 2.0
     Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(name, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
             Text(
-                "${fmt(block.interval.low)}–${fmt(block.interval.high)} г",
+                "${fmt(low)}–${fmt(high)} г",
                 style = MaterialTheme.typography.bodyMedium,
                 color = scheme.onSurfaceVariant,
             )
         }
-        ThinProgress(
-            (mid / block.targetG).toFloat(),
-            color = if (block.verdict == NutrientVerdict.ABOVE) scheme.tertiary else scheme.primary,
-        )
+        ThinProgress(progress, color = if (over) scheme.tertiary else scheme.primary)
         Row {
             Text(
-                stringResource(R.string.report_target_short, block.targetG),
+                targetText,
                 style = MaterialTheme.typography.labelSmall,
                 color = scheme.onSurfaceVariant,
                 modifier = Modifier.weight(1f),
             )
             Text(
-                block.verdict.label,
+                deltaText,
                 style = MaterialTheme.typography.labelSmall,
-                color = scheme.onSurfaceVariant,
+                color = if (over) scheme.tertiary else scheme.onSurfaceVariant,
             )
         }
     }
 }
 
 private fun fmt(value: Double): String = value.roundToInt().toString()
+
+@Composable
+private fun AdviceCard(advice: List<Advice>) {
+    SectionCard(
+        title = stringResource(R.string.report_advice_title),
+        subtitle = stringResource(R.string.report_advice_subtitle),
+    ) {
+        advice.forEachIndexed { index, item ->
+            if (index > 0) {
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            }
+            AdviceRow(item)
+        }
+    }
+}
+
+@Composable
+private fun AdviceRow(item: Advice) {
+    val scheme = MaterialTheme.colorScheme
+    val (container, content, icon) = when (item.tone) {
+        AdviceTone.WARN -> Triple(scheme.tertiaryContainer, scheme.onTertiaryContainer, Icons.Filled.WarningAmber)
+        AdviceTone.GOOD -> Triple(scheme.primaryContainer, scheme.onPrimaryContainer, Icons.Filled.CheckCircle)
+        AdviceTone.TIP -> Triple(scheme.surfaceContainerLow, scheme.onSurfaceVariant, Icons.Filled.Lightbulb)
+    }
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Box(
+            modifier = Modifier.size(32.dp).clip(CircleShape).background(container),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(icon, contentDescription = null, tint = content, modifier = Modifier.size(18.dp))
+        }
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(item.title, style = MaterialTheme.typography.titleSmall)
+            Text(
+                item.detail,
+                style = MaterialTheme.typography.bodyMedium,
+                color = scheme.onSurfaceVariant,
+            )
+        }
+    }
+}
 
 @Composable
 private fun RegimenCard(regimen: RegimenBlock) {
@@ -326,7 +468,7 @@ private fun RegimenCard(regimen: RegimenBlock) {
 }
 
 @Composable
-private fun RegimenRow(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String) {
+private fun RegimenRow(icon: ImageVector, label: String) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         Box(
             modifier = Modifier.size(28.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceContainerLow),

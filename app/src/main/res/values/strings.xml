@@ -174,8 +174,6 @@
     <string name="report_fat">Жиры</string>
     <string name="report_carbs">Углеводы</string>
     <string name="report_range_vs_target">%1$s–%2$s г · цель %3$d г · %4$s</string>
-    <string name="report_fiber_value">Клетчатка: %1$s–%2$s г</string>
-    <string name="report_sugar_value">Сахар: %1$s–%2$s г</string>
     <string name="report_ultra_value">Ультрапереработанное: %1$d из %2$d компонентов</string>
     <string name="report_meal_count">Приёмов пищи: %1$d</string>
     <string name="report_last_intake">Последний приём: %1$s</string>
@@ -185,10 +183,31 @@
     <string name="report_gap_hours">%1$d ч %2$d мин</string>
     <string name="report_gap_minutes">%1$d мин</string>
     <string name="report_no_meals">За этот день нет ни одной готовой карточки — отчёт пустой.</string>
-    <string name="report_text_title">Кратко о дне</string>
+    <string name="report_text_title">Разбор дня</string>
     <string name="report_text_refresh">Обновить текст</string>
     <string name="report_text_loading">Готовим формулировки…</string>
     <string name="report_no_targets">Цели не заданы. Заполните анкету в настройках, чтобы отчёт сравнивал день с целью.</string>
+    <string name="report_advice_title">Советы на завтра</string>
+    <string name="report_advice_subtitle">Из чисел этого дня</string>
+    <string name="report_verdict_deficit_explain">Даже верхняя граница ниже цели — день в дефиците.</string>
+    <string name="report_verdict_excess_explain">Даже нижняя граница выше цели — день в переборе.</string>
+    <string name="report_verdict_uncertain_explain">Цель внутри диапазона: точнее по фото не скажешь, смотрите тренд недели.</string>
+    <string name="report_energy_gap_below">не хватает ≈%1$d ккал</string>
+    <string name="report_energy_gap_above">выше на ≈%1$d ккал</string>
+    <string name="report_energy_gap_none">в пределах точности оценки</string>
+    <string name="report_history_line">Вчера: %1$d ккал · среднее за %2$d дн.: %3$d ккал</string>
+    <string name="report_history_no_prev">Среднее за %1$d дн.: %2$d ккал</string>
+    <string name="report_nutrient_gap_below">не хватает %1$d г</string>
+    <string name="report_nutrient_gap_above">сверх цели %1$d г</string>
+    <string name="report_nutrient_gap_none">в пределах точности</string>
+    <string name="report_fiber_row">Клетчатка</string>
+    <string name="report_fiber_target">цель %1$d г</string>
+    <string name="report_sugar_row">Сахар</string>
+    <string name="report_sugar_limit">лимит %1$d г</string>
+    <string name="report_sugar_gap_above">сверх лимита %1$d г</string>
+    <string name="report_sugar_gap_within">в лимите</string>
+    <string name="report_sugar_gap_undetermined">на границе лимита</string>
+    <string name="report_notification_summary">%1$d–%2$d ккал · %3$s</string>
 
     <!-- Календарь -->
     <string name="calendar_title">Календарь</string>
@@ -224,6 +243,7 @@
     <string name="settings_push_time">Время уведомления: %1$02d:00</string>
     <string name="settings_push_time_action">Изменить время</string>
     <string name="settings_push_permission_denied">Разрешение на уведомления не выдано — вечерний отчёт не придёт, пока разрешение не включено в настройках системы.</string>
+    <string name="settings_push_permission_action">Открыть настройки уведомлений</string>
     <string name="settings_section_goals">Цели</string>
     <string name="settings_goals_value">%1$d ккал · Б %2$d · Ж %3$d · У %4$d</string>
     <string name="settings_goals_missing">Анкета не заполнена</string>
@@ -284,7 +304,7 @@
     <string name="settings_group_goals">Цели и анкета</string>
     <string name="settings_group_data">Данные</string>
     <string name="settings_group_about">О приложении</string>
-    <string name="settings_push_enabled_hint">Каждый день в выбранное время</string>
+    <string name="settings_push_enabled_hint">Каждый день в %1$02d:00</string>
     <string name="settings_about_version">Версия 0.1.0</string>
     <string name="settings_about_note">Дневник питания с разбором фотографий</string>
     <string name="stats_metric_meals">приёмов пищи</string>

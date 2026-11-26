@@ -78,10 +78,13 @@ class ReportTextSanitizeTest {
         val generator = ReportTextGenerator(apiKeyProvider = { null })
         val fallback = generator.buildFallbackText(report)
         assertTrue(fallback.contains("в пределах неопределённости"))
-        assertTrue(fallback.contains("мало данных"))
+        assertTrue(fallback.contains("Мало данных"))
         assertTrue(fallback.contains("20:30"))
         // fallback не содержит новых чисел относительно собственного JSON-входа
         val json = generator.buildInputJson(report)
         assertFalse(ReportTextSanitizer.containsNewNumbers(fallback, json))
+        // текст перестал быть пересказом вердиктов: в нём есть разрыв с целью и действие
+        assertTrue(fallback.contains("добавьте"))
+        assertTrue(fallback.contains("при цели"))
     }
 }

@@ -21,6 +21,11 @@ Android-приложение для учёта питания и трениро�
 ./gradlew assembleRelease        # release (нужна настройка подписи)
 ```
 
+Для сборки и тестов нужен JDK 21 (`JAVA_HOME`): на JDK 17 тестовый процесс падает
+с `UnsupportedClassVersionError`, потому что `jvmTarget = 21`. Если путь к проекту
+содержит кириллицу, `testDebugUnitTest` может не найти классы тестов — запускайте
+из каталога с латинским путём.
+
 ## CI/CD
 
 GitHub Actions собирает, тестирует и линтит каждый push в `main` и каждый pull request; по тегу `v*` выпускает подписанные APK и AAB.
