@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Тёмная тема: окно до первого кадра Compose не должно вспыхивать кремовым. -->
+    <color name="window_background">#101613</color>
+</resources>

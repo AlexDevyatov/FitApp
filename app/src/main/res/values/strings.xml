@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">FitApp</string>
+    <string name="app_name">SnapMeal</string>
+    <string name="splash_tagline">Дневник питания по фото</string>
 
     <!-- Статусы карточек -->
     <string name="status_pending">Ожидает</string>
@@ -56,7 +57,7 @@
     <!-- Онбординг: ключ -->
     <string name="key_title_onboarding">API-ключ</string>
     <string name="key_title_settings">API-ключ</string>
-    <string name="key_caption">FitApp разбирает фотографии еды через сервис провайдера по вашему личному ключу. Введите ключ — без него приложение не пустит дальше никто, данные хранятся только на устройстве.</string>
+    <string name="key_caption">SnapMeal разбирает фотографии еды через сервис провайдера по вашему личному ключу. Введите ключ — без него приложение не пустит дальше никто, данные хранятся только на устройстве.</string>
     <string name="key_field_label">Вставьте API-ключ</string>
     <string name="key_paste">Вставить из буфера</string>
     <string name="key_import_file">Импорт из файла</string>
@@ -320,7 +321,7 @@
     <string name="settings_group_data">Данные</string>
     <string name="settings_group_about">О приложении</string>
     <string name="settings_push_enabled_hint">Каждый день в %1$02d:00</string>
-    <string name="settings_about_version">Версия 0.2.0</string>
+    <string name="settings_about_version">Версия 0.2.1</string>
     <string name="settings_about_note">Дневник питания с разбором фотографий</string>
     <string name="stats_metric_meals">приёмов пищи</string>
     <string name="stats_metric_edited">исправлено</string>

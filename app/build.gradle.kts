@@ -27,8 +27,8 @@ android {
         applicationId = "ru.fitapp"
         minSdk = 26
         targetSdk = 36
-        versionCode = versionCodeOverride ?: 2
-        versionName = versionNameOverride ?: "0.2.0"
+        versionCode = versionCodeOverride ?: 3
+        versionName = versionNameOverride ?: "0.2.1"
     }
 
     signingConfigs {
@@ -89,6 +89,7 @@ dependencies {
     implementation(composeBom)
 
     implementation("androidx.core:core-ktx:1.16.0")
+    implementation("androidx.core:core-splashscreen:1.0.1")
     implementation("androidx.activity:activity-compose:1.10.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.9.1")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.1")

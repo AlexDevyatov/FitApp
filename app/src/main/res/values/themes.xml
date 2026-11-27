@@ -5,4 +5,16 @@
         <item name="android:statusBarColor">@color/primary_dark</item>
         <item name="android:windowBackground">@color/window_background</item>
     </style>
+
+    <!--
+        Системный splash (Android 12+, на 26–30 — бэкпорт core-splashscreen).
+        Фон — тот же изумруд, что в брендированном слое Compose, поэтому переход не виден.
+        Градиент сюда положить нельзя: windowSplashScreenBackground принимает только цвет.
+    -->
+    <style name="Theme.FitApp.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/splash_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_shutter</item>
+        <item name="windowSplashScreenAnimationDuration">600</item>
+        <item name="postSplashScreenTheme">@style/Theme.FitApp</item>
+    </style>
 </resources>

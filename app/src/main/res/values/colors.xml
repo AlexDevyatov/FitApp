@@ -1,8 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="primary">#2E7D32</color>
-    <color name="primary_dark">#1B5E20</color>
-    <color name="accent">#8BC34A</color>
-    <color name="window_background">#FAFAFA</color>
-    <color name="ic_launcher_background">#2E7D32</color>
+    <!-- Старые роли оставлены, пока на них ссылается тема; новые — из design/tokens.json. -->
+    <color name="primary">#0E6B4F</color>
+    <color name="primary_dark">#0A4A37</color>
+    <color name="accent">#C8F26A</color>
+    <color name="ic_launcher_background">#0E6B4F</color>
+
+    <!-- Окно до первого кадра Compose: цвет = background темы, чтобы не мигало белым. -->
+    <color name="window_background">#F4F1E8</color>
+
+    <!-- Системный splash (Android 12+): сплошной изумруд одинаков в обеих темах. -->
+    <color name="splash_background">#0E6B4F</color>
 </resources>
