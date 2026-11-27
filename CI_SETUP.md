@@ -33,7 +33,11 @@ git push origin v1.0.0
 
 Workflow соберёт `app-release.apk` и `app-release.aab`, проверит подпись через `apksigner` и создаст GitHub Release.
 
-Номер версии берётся из `app/build.gradle.kts` (`versionCode` / `versionName`) — **поднимайте их вручную перед тегом**, иначе Google Play отклонит повторный `versionCode`.
+Номер версии в CI берётся из тега и номера запуска: `versionName` — имя тега без `v`
+(`v0.2.0` → `0.2.0`), `versionCode` — `GITHUB_RUN_NUMBER`. Значения в
+`app/build.gradle.kts` (`versionName` / `versionCode`) — умолчания для локальных сборок,
+их стоит держать в тон последнему релизу. Google Play отклоняет повторный `versionCode`,
+а номер запуска растёт с каждым прогоном.
 
 Ручной запуск без тега: `Actions → Release Build → Run workflow` (артефакты будут, GitHub Release — нет).
 
@@ -84,6 +88,7 @@ cd C:\work\fitapp; .\gradlew.bat testDebugUnitTest
 - CI-прогон `push в main` — зелёный (~4 мин)
 - Release-прогон `workflow_dispatch` — зелёный: секреты прочитаны, keystore декодирован, `apksigner verify` подтвердил подпись
 - Релиз [v0.1.0](https://github.com/AlexDevyatov/FitApp/releases/tag/v0.1.0) опубликован с `app-release.apk` и `app-release.aab`
+- Релиз [v0.2.0](https://github.com/AlexDevyatov/FitApp/releases/tag/v0.2.0) — напитки с отметкой «С сахаром», правка массы и пересчёт КБЖУ по названию; `versionName` 0.2.0, `versionCode` 5 (номер запуска), подпись проверена: `CN=FitApp`, APK Signature Scheme v2
 
 Секреты `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD` уже добавлены в репозиторий.
 
