@@ -76,6 +76,7 @@ fun kindLabelRes(kind: String?): Int? = when (kind) {
     "dish" -> R.string.day_kind_dish
     "plate" -> R.string.day_kind_plate
     "label" -> R.string.day_kind_label
+    "drink" -> R.string.day_kind_drink
     else -> null
 }
 
@@ -483,13 +484,18 @@ fun MealThumbnail(photoPath: String?, size: Dp, modifier: Modifier = Modifier, r
     }
 }
 
-/** Сегментированный переключатель M3: выбранный сегмент — secondaryContainer с галочкой. */
+/**
+ * Сегментированный переключатель M3: выбранный сегмент — secondaryContainer с галочкой.
+ * `compact` — для четырёх и более вариантов: галочка скрывается, подпись мельче,
+ * иначе сегменты не помещаются на узком экране.
+ */
 @Composable
 fun SegmentedControl(
     options: List<String>,
     selectedIndex: Int,
     onSelect: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    compact: Boolean = false,
 ) {
     val scheme = MaterialTheme.colorScheme
     Row(
@@ -510,11 +516,11 @@ fun SegmentedControl(
                     .clip(RoundedCornerShape(10.dp))
                     .background(if (selected) scheme.secondaryContainer else Color.Transparent)
                     .clickable { onSelect(index) }
-                    .padding(horizontal = 8.dp),
+                    .padding(horizontal = if (compact) 4.dp else 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center,
             ) {
-                if (selected) {
+                if (selected && !compact) {
                     Icon(
                         Icons.Filled.Check,
                         contentDescription = null,
@@ -525,7 +531,11 @@ fun SegmentedControl(
                 }
                 Text(
                     label,
-                    style = MaterialTheme.typography.labelMedium,
+                    style = if (compact) {
+                        MaterialTheme.typography.labelSmall
+                    } else {
+                        MaterialTheme.typography.labelMedium
+                    },
                     color = if (selected) scheme.onSecondaryContainer else scheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,

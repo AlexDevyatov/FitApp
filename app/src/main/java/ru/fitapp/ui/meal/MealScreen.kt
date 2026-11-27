@@ -1,6 +1,5 @@
 package ru.fitapp.ui.meal
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,18 +13,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.WarningAmber
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -50,6 +48,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -58,9 +58,12 @@ import java.io.File
 import kotlin.math.roundToInt
 import ru.fitapp.R
 import ru.fitapp.data.db.ItemEntity
+import ru.fitapp.data.db.ItemRecalcState
 import ru.fitapp.data.db.MealStatus
 import ru.fitapp.data.db.MealWithItems
 import ru.fitapp.domain.FrameKind
+import ru.fitapp.domain.PortionRecalc
+import ru.fitapp.domain.dbValue
 import ru.fitapp.ui.common.MealStatusChip
 import ru.fitapp.ui.common.ScreenTopBar
 import ru.fitapp.ui.common.SectionCard
@@ -72,8 +75,12 @@ import ru.fitapp.ui.factoryOf
 import ru.fitapp.ui.fitApp
 
 /**
- * Карточка приёма пищи: фото-hero, что на тарелке, правка названий и типа кадра,
- * итог изумрудной карточкой. Удаление карточки — в overflow-меню.
+ * Карточка приёма пищи: фото-hero, что на тарелке, правка названия и массы,
+ * отметка «С сахаром» для напитков, итог изумрудной карточкой.
+ * Удаление карточки — в overflow-меню.
+ *
+ * Правка названия уходит в модель (КБЖУ пересчитываются по новому названию),
+ * правка массы считается локально — состояние обеих видно прямо в строке компонента.
  */
 @Composable
 fun MealScreen(
@@ -88,7 +95,7 @@ fun MealScreen(
 
     var showDeleteMealDialog by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
-    var renameTarget by remember { mutableStateOf<ItemEntity?>(null) }
+    var editTarget by remember { mutableStateOf<ItemEntity?>(null) }
     var deleteItemTarget by remember { mutableStateOf<ItemEntity?>(null) }
 
     LaunchedEffect(deleted) {
@@ -145,7 +152,9 @@ fun MealScreen(
                 padding = padding,
                 data = data,
                 onSetKind = vm::setKind,
-                onRenameItem = { renameTarget = it },
+                onSetSugar = vm::setSugar,
+                onEditItem = { editTarget = it },
+                onRetryRecalc = vm::retryRecalc,
                 onDeleteItem = { deleteItemTarget = it },
                 onDeleteMeal = { showDeleteMealDialog = true },
                 onRetry = vm::retry,
@@ -173,33 +182,13 @@ fun MealScreen(
         )
     }
 
-    renameTarget?.let { target ->
-        var text by remember(target.id) { mutableStateOf(target.name) }
-        AlertDialog(
-            onDismissRequest = { renameTarget = null },
-            shape = RoundedCornerShape(28.dp),
-            title = { Text(stringResource(R.string.meal_rename_title)) },
-            text = {
-                OutlinedTextField(
-                    value = text,
-                    onValueChange = { text = it },
-                    singleLine = true,
-                    label = { Text(stringResource(R.string.meal_rename_hint)) },
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    enabled = text.isNotBlank(),
-                    onClick = {
-                        vm.renameItem(target.id, text)
-                        renameTarget = null
-                    },
-                ) { Text(stringResource(R.string.action_save)) }
-            },
-            dismissButton = {
-                TextButton(onClick = { renameTarget = null }) {
-                    Text(stringResource(R.string.action_cancel))
-                }
+    editTarget?.let { target ->
+        ItemEditDialog(
+            item = target,
+            onDismiss = { editTarget = null },
+            onSave = { name, grams ->
+                vm.updateItem(target.id, name, grams)
+                editTarget = null
             },
         )
     }
@@ -232,7 +221,9 @@ private fun MealContent(
     padding: PaddingValues,
     data: MealWithItems,
     onSetKind: (FrameKind) -> Unit,
-    onRenameItem: (ItemEntity) -> Unit,
+    onSetSugar: (Boolean) -> Unit,
+    onEditItem: (ItemEntity) -> Unit,
+    onRetryRecalc: (String) -> Unit,
     onDeleteItem: (ItemEntity) -> Unit,
     onDeleteMeal: () -> Unit,
     onRetry: () -> Unit,
@@ -247,6 +238,7 @@ private fun MealContent(
     val totalCarbs = itemsList.sumOf { it.carbsG }
     val totalFiber = itemsList.sumOf { it.fiberG }
     val totalSugar = itemsList.sumOf { it.sugarG }
+    val editable = meal.status == MealStatus.DONE
 
     LazyColumn(
         modifier = Modifier.padding(padding).fillMaxSize(),
@@ -338,20 +330,36 @@ private fun MealContent(
             }
         }
 
+        // Отметка «С сахаром» — только для напитка: модель считает напиток без
+        // отдельно добавленного сахара, а его отмечает пользователь.
+        if (editable && meal.kind == FrameKind.DRINK.dbValue && itemsList.isNotEmpty()) {
+            item(key = "sugar") {
+                SectionCard(title = stringResource(R.string.meal_sugar_section)) {
+                    SugarToggle(
+                        checked = meal.sugarAdded == 1,
+                        onCheckedChange = onSetSugar,
+                    )
+                }
+            }
+        }
+
         if (itemsList.isNotEmpty()) {
             item(key = "components") {
                 SectionCard(
                     title = stringResource(R.string.meal_components),
-                    subtitle = stringResource(R.string.meal_readonly_hint),
+                    subtitle = stringResource(
+                        if (editable) R.string.meal_edit_hint_short else R.string.meal_readonly_hint,
+                    ),
                 ) {
                     Column {
                         itemsList.forEachIndexed { index, item ->
                             if (index > 0) HorizontalDivider(color = scheme.outlineVariant)
                             ItemRow(
                                 item = item,
-                                editable = meal.status == MealStatus.DONE,
-                                onRename = { onRenameItem(item) },
+                                editable = editable,
+                                onEdit = { onEditItem(item) },
                                 onDelete = { onDeleteItem(item) },
+                                onRetryRecalc = { onRetryRecalc(item.id) },
                             )
                         }
                     }
@@ -411,31 +419,54 @@ private fun MealContent(
         if (meal.status == MealStatus.DONE) {
             item(key = "kind") {
                 SectionCard(title = stringResource(R.string.meal_kind)) {
-                    val selected = when (meal.kind) {
-                        "dish" -> 0
-                        "plate" -> 1
-                        "label" -> 2
-                        else -> -1
-                    }
+                    val kinds = listOf(
+                        FrameKind.DISH to R.string.meal_kind_dish,
+                        FrameKind.PLATE to R.string.meal_kind_plate,
+                        FrameKind.LABEL to R.string.meal_kind_label,
+                        FrameKind.DRINK to R.string.meal_kind_drink,
+                    )
                     SegmentedControl(
-                        options = listOf(
-                            stringResource(R.string.meal_kind_dish),
-                            stringResource(R.string.meal_kind_plate),
-                            stringResource(R.string.meal_kind_label),
-                        ),
-                        selectedIndex = selected,
-                        onSelect = { index ->
-                            onSetKind(
-                                when (index) {
-                                    0 -> FrameKind.DISH
-                                    1 -> FrameKind.PLATE
-                                    else -> FrameKind.LABEL
-                                },
-                            )
-                        },
+                        options = kinds.map { stringResource(it.second) },
+                        selectedIndex = kinds.indexOfFirst { it.first.dbValue == meal.kind },
+                        onSelect = { index -> onSetKind(kinds[index].first) },
+                        compact = true,
                     )
                 }
             }
+        }
+    }
+}
+
+/**
+ * Галочка «С сахаром»: вся строка — один переключатель с ролью чекбокса, поэтому
+ * TalkBack читает «С сахаром, … флажок, отмечен / не отмечен» одним узлом.
+ */
+@Composable
+private fun SugarToggle(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .toggleable(value = checked, role = Role.Checkbox, onValueChange = onCheckedChange)
+            .padding(vertical = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Checkbox(checked = checked, onCheckedChange = null)
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(stringResource(R.string.meal_sugar_title), style = MaterialTheme.typography.titleMedium)
+            Text(
+                stringResource(
+                    R.string.meal_sugar_hint,
+                    formatGrams(PortionRecalc.ADDED_SUGAR_G),
+                    formatKcal(PortionRecalc.ADDED_SUGAR_G * PortionRecalc.KCAL_PER_G_SUGAR),
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }
@@ -444,8 +475,9 @@ private fun MealContent(
 private fun ItemRow(
     item: ItemEntity,
     editable: Boolean,
-    onRename: () -> Unit,
+    onEdit: () -> Unit,
     onDelete: () -> Unit,
+    onRetryRecalc: () -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
     Column(
@@ -461,9 +493,13 @@ private fun ItemRow(
                     overflow = TextOverflow.Ellipsis,
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    item.grams?.let {
+                    item.grams?.let { grams ->
+                        val edited = item.baseGrams != null && item.baseGrams != grams
                         Text(
-                            stringResource(R.string.meal_grams, formatGrams(it)),
+                            stringResource(
+                                if (edited) R.string.meal_grams_edited else R.string.meal_grams,
+                                formatGrams(grams),
+                            ),
                             style = MaterialTheme.typography.bodySmall,
                             color = scheme.onSurfaceVariant,
                         )
@@ -477,10 +513,10 @@ private fun ItemRow(
                 }
             }
             if (editable) {
-                IconButton(onClick = onRename, modifier = Modifier.size(40.dp)) {
+                IconButton(onClick = onEdit, modifier = Modifier.size(40.dp)) {
                     Icon(
                         Icons.Filled.Edit,
-                        contentDescription = stringResource(R.string.cd_rename),
+                        contentDescription = stringResource(R.string.cd_edit_item),
                         modifier = Modifier.size(18.dp),
                         tint = scheme.onSurfaceVariant,
                     )
@@ -518,7 +554,111 @@ private fun ItemRow(
                 )
             }
         }
+        RecalcStateLine(item = item, onRetry = onRetryRecalc)
     }
+}
+
+/** Строка состояния пересчёта по названию: идёт запрос / не удалось, с повтором. */
+@Composable
+private fun RecalcStateLine(item: ItemEntity, onRetry: () -> Unit) {
+    val scheme = MaterialTheme.colorScheme
+    when (item.recalcState) {
+        ItemRecalcState.RUNNING -> Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(top = 2.dp),
+        ) {
+            CircularProgressIndicator(modifier = Modifier.size(12.dp), strokeWidth = 1.5.dp)
+            Text(
+                stringResource(R.string.meal_recalc_running),
+                style = MaterialTheme.typography.labelSmall,
+                color = scheme.onSurfaceVariant,
+            )
+        }
+
+        ItemRecalcState.FAILED -> Column(modifier = Modifier.padding(top = 2.dp)) {
+            val recalcError = item.recalcError.orEmpty().trim()
+            Text(
+                if (recalcError.isEmpty()) {
+                    stringResource(R.string.meal_recalc_failed_plain)
+                } else {
+                    stringResource(R.string.meal_recalc_failed, recalcError)
+                },
+                style = MaterialTheme.typography.labelSmall,
+                color = scheme.error,
+            )
+            TextButton(onClick = onRetry, contentPadding = PaddingValues(horizontal = 4.dp)) {
+                Icon(Icons.Filled.Refresh, contentDescription = null, modifier = Modifier.size(14.dp))
+                Spacer(Modifier.width(4.dp))
+                Text(stringResource(R.string.meal_recalc_retry), style = MaterialTheme.typography.labelMedium)
+            }
+        }
+    }
+}
+
+/** Правка компонента: название уходит в модель, масса пересчитывается локально. */
+@Composable
+private fun ItemEditDialog(
+    item: ItemEntity,
+    onDismiss: () -> Unit,
+    onSave: (name: String, grams: Double?) -> Unit,
+) {
+    var name by remember(item.id) { mutableStateOf(item.name) }
+    val gramsEditable = PortionRecalc.canEditGrams(item.baseGrams)
+    var gramsText by remember(item.id) { mutableStateOf(PortionRecalc.gramsToInput(item.grams)) }
+    val parsedGrams = PortionRecalc.parseGrams(gramsText)
+    val gramsInvalid = gramsEditable && parsedGrams == null
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        shape = RoundedCornerShape(28.dp),
+        title = { Text(stringResource(R.string.meal_edit_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    singleLine = true,
+                    label = { Text(stringResource(R.string.meal_edit_name)) },
+                )
+                if (gramsEditable) {
+                    OutlinedTextField(
+                        value = gramsText,
+                        onValueChange = { gramsText = it },
+                        singleLine = true,
+                        isError = gramsInvalid,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        label = { Text(stringResource(R.string.meal_edit_grams)) },
+                        supportingText = if (gramsInvalid) {
+                            { Text(stringResource(R.string.meal_edit_grams_error)) }
+                        } else {
+                            null
+                        },
+                    )
+                } else {
+                    Text(
+                        stringResource(R.string.meal_edit_grams_unavailable),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Text(
+                    stringResource(R.string.meal_edit_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                enabled = name.isNotBlank() && !gramsInvalid,
+                onClick = { onSave(name, if (gramsEditable) parsedGrams else item.grams) },
+            ) { Text(stringResource(R.string.action_save)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
+        },
+    )
 }
 
 @Composable

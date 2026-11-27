@@ -25,6 +25,9 @@ object MealProcessor {
 
     fun uniqueName(mealId: String) = "meal-$mealId"
 
+    /** Уникальное имя работы пересчёта КБЖУ по названию компонента. */
+    fun recalcUniqueName(itemId: String) = "recalc-$itemId"
+
     /** Поставить карточку в очередь. Повторный вызов с тем же mealId не создаёт вторую работу. */
     fun enqueue(context: Context, mealId: String) {
         val request = OneTimeWorkRequestBuilder<AnalyzeWorker>()
@@ -59,5 +62,24 @@ object MealProcessor {
         WorkManager.getInstance(context)
             .enqueueUniqueWork(uniqueName(mealId), ExistingWorkPolicy.REPLACE, request)
         Log.i(TAG, "meal=$mealId: ручной повтор разбора поставлен в очередь (REPLACE) work_id=${request.id}")
+    }
+
+    /**
+     * Пересчёт КБЖУ компонента по новому названию. REPLACE: правка названия
+     * отменяет незавершённый пересчёт по прежнему названию и сбрасывает попытки.
+     */
+    fun enqueueItemRecalc(context: Context, itemId: String) {
+        val request = OneTimeWorkRequestBuilder<ItemRecalcWorker>()
+            .setInputData(workDataOf(ItemRecalcWorker.KEY_ITEM_ID to itemId))
+            .setConstraints(
+                Constraints.Builder()
+                    .setRequiredNetworkType(NetworkType.CONNECTED)
+                    .build(),
+            )
+            .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS)
+            .build()
+        WorkManager.getInstance(context)
+            .enqueueUniqueWork(recalcUniqueName(itemId), ExistingWorkPolicy.REPLACE, request)
+        Log.i(TAG, "item=$itemId: пересчёт КБЖУ по названию поставлен в очередь work_id=${request.id}")
     }
 }

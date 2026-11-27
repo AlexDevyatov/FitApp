@@ -102,6 +102,35 @@ class FrameSchemaTest {
     }
 
     @Test
+    fun `drink kind maps to drink`() {
+        val json = """
+            {"kind":"drink","confidence":0.88,"notes":"Сахар не учтён","items":[
+              {"name":"Кофе чёрный","grams":200.0,"kcal":4.0,"protein_g":0.2,"fat_g":0.0,
+               "carbs_g":0.6,"fiber_g":0.0,"sugar_g":0.0,"ultra_processed":false}]}
+        """.trimIndent()
+        val outcome = frameJson.decodeFromString(FrameResponseDto.serializer(), json).toOutcome()
+            as AnalyzeOutcome.Ok
+        assertEquals(FrameKind.DRINK, outcome.result.kind)
+        assertEquals("Кофе чёрный", outcome.result.items.single().name)
+    }
+
+    @Test
+    fun `low confidence drink falls back to dish`() {
+        // §3 PLAN: при сомнении модель возвращает «блюдо», отметка сахара не появится.
+        val json = """{"kind":"drink","confidence":0.3,"notes":"Не уверен","items":[]}"""
+        val outcome = frameJson.decodeFromString(FrameResponseDto.serializer(), json).toOutcome()
+            as AnalyzeOutcome.Ok
+        assertEquals(FrameKind.DISH, outcome.result.kind)
+    }
+
+    @Test
+    fun `strict schema advertises drink`() {
+        assertTrue(FRAME_JSON_SCHEMA_STRICT.contains("\"drink\""))
+        val parsed = frameJson.parseToJsonElement(FRAME_JSON_SCHEMA_STRICT)
+        assertTrue(parsed is kotlinx.serialization.json.JsonObject)
+    }
+
+    @Test
     fun `strict schema constant matches plan required fields`() {
         // Схема из §4.3 — проверяем, что константа содержит ключевые элементы
         assertTrue(FRAME_JSON_SCHEMA_STRICT.contains("\"not_food\""))

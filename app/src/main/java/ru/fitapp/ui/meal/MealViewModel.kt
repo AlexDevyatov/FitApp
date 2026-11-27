@@ -14,17 +14,21 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import ru.fitapp.FitAppApplication
 import ru.fitapp.core.LogTags
+import ru.fitapp.data.db.ItemRecalcState
 import ru.fitapp.data.db.MealStatus
 import ru.fitapp.data.db.MealWithItems
 import ru.fitapp.domain.FrameKind
 import ru.fitapp.work.MealProcessor
 
 /**
- * Карточка приёма пищи (§9): компоненты, правки (тип кадра, название, удаление),
- * повтор обработки при FAILED/AUTH_ERROR. Каждая правка пишет edit и помечает
- * meal.edited / day.hand_edited — это делает MealRepository.
+ * Карточка приёма пищи (§9): компоненты, правки (тип кадра, название и масса,
+ * отметка «С сахаром», удаление), повтор обработки при FAILED/AUTH_ERROR.
  *
- * Логи (tag `FitAppUI`): отменённые действия, удаление и ручной повтор.
+ * Название и масса сохраняются сразу; после смены названия ставится пересчёт КБЖУ
+ * по названию (ItemRecalcWorker), масса пересчитывается локально в MealRepository.
+ * Каждая правка пишет edit и помечает meal.edited / day.hand_edited.
+ *
+ * Логи (tag `FitAppUI`): отменённые действия, удаление, ручной повтор и правки.
  * Сами изменения карточки пишет MealRepository (tag `FitAppData`).
  */
 class MealViewModel(app: Application, private val mealId: String) : AndroidViewModel(app) {
@@ -41,13 +45,53 @@ class MealViewModel(app: Application, private val mealId: String) : AndroidViewM
         viewModelScope.launch { fitApp.mealRepository.setMealKind(mealId, kind) }
     }
 
-    fun renameItem(itemId: String, newName: String) {
+    /** Отметка «С сахаром»: пересчитывает КБЖУ карточки без запроса к модели. */
+    fun setSugar(withSugar: Boolean) {
+        viewModelScope.launch { fitApp.mealRepository.setSugarAdded(mealId, withSugar) }
+    }
+
+    /**
+     * Правка компонента. Название изменилось — ставим пересчёт КБЖУ по названию:
+     * числа модели для нового блюда иначе остались бы от прежнего.
+     */
+    fun updateItem(itemId: String, newName: String, grams: Double?) {
         val trimmed = newName.trim()
         if (trimmed.isEmpty()) {
             Log.w(TAG, "meal=$mealId item=$itemId: пустое название — правка отклонена")
             return
         }
-        viewModelScope.launch { fitApp.mealRepository.renameItem(itemId, trimmed) }
+        viewModelScope.launch {
+            val result = fitApp.mealRepository.updateItem(itemId, trimmed, grams)
+            if (result.requiresReestimate) {
+                Log.i(TAG, "meal=$mealId item=$itemId: название изменилось — КБЖУ будут пересчитаны")
+                enqueueRecalc(itemId)
+            }
+        }
+    }
+
+    /** Повтор пересчёта после ошибки: работа ставится заново, счётчик попыток сбрасывается. */
+    fun retryRecalc(itemId: String) {
+        viewModelScope.launch {
+            Log.i(TAG, "meal=$mealId item=$itemId: ручной повтор пересчёта КБЖУ")
+            enqueueRecalc(itemId)
+        }
+    }
+
+    /**
+     * Ставит пересчёт в очередь и сразу помечает компонент: пока работа ждёт сеть,
+     * карточка показывает «Пересчитываем КБЖУ», а не молчит со старыми числами.
+     */
+    private suspend fun enqueueRecalc(itemId: String) {
+        fitApp.mealRepository.setItemRecalcState(itemId, ItemRecalcState.RUNNING, null)
+        runCatching { MealProcessor.enqueueItemRecalc(getApplication(), itemId) }
+            .onFailure { error ->
+                Log.e(TAG, "meal=$mealId item=$itemId: пересчёт не удалось поставить в очередь", error)
+                fitApp.mealRepository.setItemRecalcState(
+                    itemId,
+                    ItemRecalcState.FAILED,
+                    "Не удалось поставить пересчёт в очередь",
+                )
+            }
     }
 
     fun deleteItem(itemId: String) {

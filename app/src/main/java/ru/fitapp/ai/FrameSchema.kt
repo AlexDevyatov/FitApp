@@ -38,14 +38,14 @@ data class FrameResponseDto(
     @SerialName("items") val items: List<FrameItemDto>,
 )
 
-/** Схема response_format json_schema (strict) — §4.3 PLAN, один в один. */
+/** Схема response_format json_schema (strict) — §4.3 PLAN, один в один + `drink`. */
 const val FRAME_JSON_SCHEMA_STRICT: String = """
 {
   "type": "object",
   "additionalProperties": false,
   "required": ["kind", "items", "confidence", "notes"],
   "properties": {
-    "kind": { "type": "string", "enum": ["dish", "plate", "label", "not_food"] },
+    "kind": { "type": "string", "enum": ["dish", "plate", "label", "drink", "not_food"] },
     "confidence": { "type": "number" },
     "notes": { "type": "string" },
     "items": {
@@ -98,6 +98,7 @@ fun FrameResponseDto.toOutcome(): AnalyzeOutcome {
         KIND_DISH -> FrameKind.DISH
         KIND_PLATE -> FrameKind.PLATE
         KIND_LABEL -> FrameKind.LABEL
+        KIND_DRINK -> FrameKind.DRINK
         else -> FrameKind.DISH
     }
     val effectiveKind = if (confidence < KIND_CONFIDENCE_THRESHOLD) FrameKind.DISH else parsedKind
@@ -115,4 +116,5 @@ fun FrameResponseDto.toOutcome(): AnalyzeOutcome {
 const val KIND_DISH = "dish"
 const val KIND_PLATE = "plate"
 const val KIND_LABEL = "label"
+const val KIND_DRINK = "drink"
 const val KIND_NOT_FOOD = "not_food"

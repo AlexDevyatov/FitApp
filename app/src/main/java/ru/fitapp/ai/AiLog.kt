@@ -76,6 +76,8 @@ internal object AiLog {
 
     fun warn(message: String) = Log.w(TAG, message)
 
+    fun info(message: String) = Log.i(TAG, message)
+
     fun error(message: String, error: Throwable? = null) {
         if (error == null) Log.e(TAG, message) else Log.e(TAG, message, error)
     }

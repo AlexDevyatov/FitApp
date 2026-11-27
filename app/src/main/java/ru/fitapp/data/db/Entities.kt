@@ -15,6 +15,15 @@ object MealStatus {
     const val NOT_FOOD = "NOT_FOOD"
 }
 
+/**
+ * Состояние пересчёта КБЖУ по новому названию компонента.
+ * null в базе — пересчёт не нужен или уже прошёл успешно.
+ */
+object ItemRecalcState {
+    const val RUNNING = "RUNNING"
+    const val FAILED = "FAILED"
+}
+
 /** Анкета и цели. Всегда одна строка с id = 1 (§6 PLAN). */
 @Entity(tableName = "profile")
 data class ProfileEntity(
@@ -68,9 +77,17 @@ data class MealEntity(
     @ColumnInfo(name = "model") val model: String? = null,
     @ColumnInfo(name = "attempts") val attempts: Int = 0,
     @ColumnInfo(name = "edited") val edited: Int = 0,
+    /** Отметка «С сахаром» для напитка: 1 — к КБЖУ добавлена порция сахара. */
+    @ColumnInfo(name = "sugar_added", defaultValue = "0") val sugarAdded: Int = 0,
 )
 
-/** Компонент разбора карточки (§6 PLAN). */
+/**
+ * Компонент разбора карточки (§6 PLAN).
+ *
+ * `base_*` — неизменяемый результат модели: от него считаются все правки (масса,
+ * отметка сахара, новое название), поэтому серия правок не накапливает погрешность.
+ * `kcal`/`protein_g`/… — текущие числа компонента, по ним считаются суммы дня и отчёт.
+ */
 @Entity(
     tableName = "item",
     indices = [Index(value = ["meal_id"])],
@@ -82,6 +99,7 @@ data class ItemEntity(
     @ColumnInfo(name = "meal_id") val mealId: String,
     @ColumnInfo(name = "ord") val ord: Int,
     @ColumnInfo(name = "name") val name: String,
+    /** Текущая масса порции; правится пользователем. */
     @ColumnInfo(name = "grams") val grams: Double? = null,
     @ColumnInfo(name = "kcal") val kcal: Double,
     @ColumnInfo(name = "protein_g") val proteinG: Double,
@@ -90,6 +108,17 @@ data class ItemEntity(
     @ColumnInfo(name = "fiber_g") val fiberG: Double,
     @ColumnInfo(name = "sugar_g") val sugarG: Double,
     @ColumnInfo(name = "ultra_processed") val ultraProcessed: Int, // 0/1
+    /** Масса из разбора модели; null — модель вес не оценила, массу править нельзя. */
+    @ColumnInfo(name = "base_grams") val baseGrams: Double? = null,
+    @ColumnInfo(name = "base_kcal", defaultValue = "0") val baseKcal: Double = 0.0,
+    @ColumnInfo(name = "base_protein_g", defaultValue = "0") val baseProteinG: Double = 0.0,
+    @ColumnInfo(name = "base_fat_g", defaultValue = "0") val baseFatG: Double = 0.0,
+    @ColumnInfo(name = "base_carbs_g", defaultValue = "0") val baseCarbsG: Double = 0.0,
+    @ColumnInfo(name = "base_fiber_g", defaultValue = "0") val baseFiberG: Double = 0.0,
+    @ColumnInfo(name = "base_sugar_g", defaultValue = "0") val baseSugarG: Double = 0.0,
+    /** ItemRecalcState.RUNNING/FAILED, null — пересчёт по названию не нужен. */
+    @ColumnInfo(name = "recalc_state") val recalcState: String? = null,
+    @ColumnInfo(name = "recalc_error") val recalcError: String? = null,
 )
 
 /** Правка карточки — источник локальной метрики (§6 PLAN). */

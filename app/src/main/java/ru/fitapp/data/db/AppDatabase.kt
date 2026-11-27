@@ -16,7 +16,7 @@ import ru.fitapp.core.LogTags
         ItemEntity::class,
         EditEntity::class,
     ],
-    version = 1,
+    version = AppDatabase.DB_VERSION,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -29,10 +29,17 @@ abstract class AppDatabase : RoomDatabase() {
         private const val TAG = LogTags.DATA
         private const val DB_NAME = "fitapp.db"
 
+        /**
+         * Версия схемы. 2 — правка массы компонента, пересчёт КБЖУ по названию,
+         * отметка «С сахаром» (см. [Migrations.MIGRATION_1_2]).
+         */
+        const val DB_VERSION = 2
+
         fun create(context: Context): AppDatabase {
             val dbFile = context.applicationContext.getDatabasePath(DB_NAME)
-            Log.i(TAG, "db: открытие ${dbFile.name} version=1 path=${dbFile.absolutePath}")
+            Log.i(TAG, "db: открытие ${dbFile.name} version=$DB_VERSION path=${dbFile.absolutePath}")
             return Room.databaseBuilder(context.applicationContext, AppDatabase::class.java, DB_NAME)
+                .addMigrations(*Migrations.ALL)
                 .addCallback(
                     object : RoomDatabase.Callback() {
                         // Свежая база вместо восстановленной — главная причина «пропала история».

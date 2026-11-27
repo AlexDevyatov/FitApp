@@ -130,9 +130,17 @@ interface MealDao {
     @Query("UPDATE meal SET kind = :kind WHERE id = :mealId")
     suspend fun setKind(mealId: String, kind: String)
 
+    /** Отметка «С сахаром»: 1 — в текущие числа компонента добавлена порция сахара. */
+    @Query("UPDATE meal SET sugar_added = :added WHERE id = :mealId")
+    suspend fun setSugarAdded(mealId: String, added: Int)
+
     // --- компоненты ---
     @Query("SELECT * FROM item WHERE meal_id = :mealId ORDER BY ord ASC")
     fun observeItems(mealId: String): Flow<List<ItemEntity>>
+
+    /** Состояние пересчёта КБЖУ по новому названию: null — успех или пересчёт не нужен. */
+    @Query("UPDATE item SET recalc_state = :state, recalc_error = :error WHERE id = :itemId")
+    suspend fun setItemRecalcState(itemId: String, state: String?, error: String?)
 
     @Query("SELECT * FROM item WHERE id = :itemId")
     suspend fun getItemById(itemId: String): ItemEntity?

@@ -113,6 +113,7 @@
     <string name="day_kind_dish">Блюдо</string>
     <string name="day_kind_plate">Тарелка</string>
     <string name="day_kind_label">Этикетка</string>
+    <string name="day_kind_drink">Напиток</string>
     <string name="cd_meal_photo">Фото приёма пищи</string>
     <string name="cd_open_meal">Открыть карточку</string>
 
@@ -137,6 +138,7 @@
     <string name="meal_kind_dish">Блюдо</string>
     <string name="meal_kind_plate">Тарелка</string>
     <string name="meal_kind_label">Этикетка</string>
+    <string name="meal_kind_drink">Напиток</string>
     <string name="meal_components">Компоненты</string>
     <string name="meal_totals">Суммарные КБЖУ</string>
     <string name="meal_kcal_value">%1$s ккал</string>
@@ -146,9 +148,22 @@
     <string name="meal_macro_fiber">Клетчатка %1$s г</string>
     <string name="meal_macro_sugar">Сахар %1$s г</string>
     <string name="meal_grams">≈%1$s г</string>
+    <string name="meal_grams_edited">%1$s г · правка</string>
     <string name="meal_ultra_processed">Ультрапереработанное</string>
-    <string name="meal_rename_title">Название компонента</string>
-    <string name="meal_rename_hint">Название</string>
+    <string name="meal_edit_title">Компонент</string>
+    <string name="meal_edit_name">Название</string>
+    <string name="meal_edit_grams">Масса, г</string>
+    <string name="meal_edit_grams_error">Масса — число от 1 до 5000 г.</string>
+    <string name="meal_edit_grams_unavailable">Модель не оценила вес этого компонента, поэтому массу изменить нельзя — название изменить можно.</string>
+    <string name="meal_edit_hint">КБЖУ пересчитаются: масса — сразу, после смены названия — запросом к модели.</string>
+    <string name="meal_edit_hint_short">Название и массу можно исправить — КБЖУ пересчитается.</string>
+    <string name="meal_sugar_section">Сахар в напитке</string>
+    <string name="meal_sugar_title">С сахаром</string>
+    <string name="meal_sugar_hint">Добавим %1$s г сахара — это ≈%2$s ккал</string>
+    <string name="meal_recalc_running">Пересчитываем КБЖУ по новому названию…</string>
+    <string name="meal_recalc_failed">Пересчёт не удался: %1$s</string>
+    <string name="meal_recalc_failed_plain">Не удалось пересчитать КБЖУ по названию.</string>
+    <string name="meal_recalc_retry">Пересчитать</string>
     <string name="meal_retry">Повторить обработку</string>
     <string name="meal_auth_banner">Проблема с API-ключом: провайдер отверг запрос. Пока ключ не обновлён, разбор работать не будет.</string>
     <string name="meal_auth_banner_action">Открыть настройки</string>
@@ -157,8 +172,8 @@
     <string name="meal_processing">Фото поставлено в очередь и разбирается моделью — обычно это занимает несколько десятков секунд.</string>
     <string name="meal_confidence">Уверенность разбора: %1$d%%</string>
     <string name="meal_not_found">Карточка не найдена.</string>
-    <string name="meal_readonly_hint">Цифры КБЖУ доступны только для чтения — исправить их нельзя, можно поменять тип кадра, названия или удалить лишнее.</string>
-    <string name="cd_rename">Переименовать</string>
+    <string name="meal_readonly_hint">КБЖУ считает модель: ввести их вручную нельзя, но можно поменять тип кадра, название и массу или удалить лишнее.</string>
+    <string name="cd_edit_item">Изменить название и массу</string>
     <string name="cd_delete_item">Удалить компонент</string>
 
     <!-- Отчёт дня -->
@@ -305,7 +320,7 @@
     <string name="settings_group_data">Данные</string>
     <string name="settings_group_about">О приложении</string>
     <string name="settings_push_enabled_hint">Каждый день в %1$02d:00</string>
-    <string name="settings_about_version">Версия 0.1.0</string>
+    <string name="settings_about_version">Версия 0.2.0</string>
     <string name="settings_about_note">Дневник питания с разбором фотографий</string>
     <string name="stats_metric_meals">приёмов пищи</string>
     <string name="stats_metric_edited">исправлено</string>

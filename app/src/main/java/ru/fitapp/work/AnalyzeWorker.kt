@@ -6,8 +6,6 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.sync.Semaphore
-import kotlinx.coroutines.sync.withPermit
 import ru.fitapp.FitAppApplication
 import ru.fitapp.core.LogTags
 import ru.fitapp.data.MealRepository
@@ -31,7 +29,7 @@ class AnalyzeWorker(
             TAG,
             "work id=$id: старт run_attempt=$runAttemptCount meal=${inputData.getString(KEY_MEAL_ID)}",
         )
-        return semaphore.withPermit {
+        return AiThrottle.withPermit {
             try {
                 run()
             } catch (e: CancellationException) {
@@ -164,8 +162,5 @@ class AnalyzeWorker(
 
         /** Потолок ожидания Retry-After внутри воркера — 2 минуты. */
         const val MAX_RETRY_AFTER_WAIT_MS = 120_000L
-
-        /** Не больше 2 параллельных воркеров, чтобы не ловить 429 на серии снимков (§10). */
-        private val semaphore = Semaphore(2)
     }
 }

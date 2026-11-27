@@ -27,8 +27,8 @@ android {
         applicationId = "ru.fitapp"
         minSdk = 26
         targetSdk = 36
-        versionCode = versionCodeOverride ?: 1
-        versionName = versionNameOverride ?: "0.1.0"
+        versionCode = versionCodeOverride ?: 2
+        versionName = versionNameOverride ?: "0.2.0"
     }
 
     signingConfigs {

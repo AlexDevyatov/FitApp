@@ -10,6 +10,12 @@ interface DishAnalyzer {
     /** Разбор одного кадра. Один кадр = один запрос (§4.4). */
     suspend fun analyze(jpeg: ByteArray): AnalyzeOutcome
 
+    /**
+     * Пересчёт КБЖУ по названию и массе без фотографии — после правки названия компонента.
+     * Ответ приходит по той же схеме, что и разбор: ровно один компонент в items.
+     */
+    suspend fun estimate(name: String, grams: Double?): AnalyzeOutcome
+
     /** Проверка ключа в онбординге: GET /models и наличие qwen4-max (§9). */
     suspend fun probeKey(): Boolean
 
