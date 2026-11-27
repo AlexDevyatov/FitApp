@@ -8,11 +8,14 @@
 
     <!--
         Системный splash (Android 12+, на 26–30 — бэкпорт core-splashscreen).
-        Иконки нет намеренно: система умеет показать только цвет и иконку, а нужен градиент
-        с надписями. Поэтому здесь остаётся ровный изумруд — тот же, что в верхней точке
-        векторного фона, — а сам сплэш рисует Compose (ic_splash_bg + ic_splash_logo).
+        windowDisablePreview убирает стартовое окно с ровной заливкой: без него холодный
+        старт начинался с однотонного изумруда на ~0.7 с. Сплэш рисует Compose
+        (ic_splash_bg + ic_splash_logo), а windowBackground подложен тем же градиентом,
+        чтобы окно не мигало чужим цветом, пока идёт первый кадр.
     -->
     <style name="Theme.FitApp.Splash" parent="Theme.SplashScreen">
+        <item name="android:windowBackground">@drawable/ic_splash_bg</item>
+        <item name="android:windowDisablePreview">true</item>
         <item name="windowSplashScreenBackground">@color/splash_background</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_blank</item>
         <item name="windowSplashScreenAnimationDuration">0</item>

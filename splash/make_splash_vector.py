@@ -23,6 +23,8 @@ from fontTools.pens.svgPathPen import SVGPathPen
 from fontTools.pens.transformPen import TransformPen
 from fontTools.ttLib import TTFont
 
+from trace_aperture import path_data as traced_aperture
+
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 FONTS = ROOT / "design" / "fonts"
@@ -44,13 +46,6 @@ BLOBS = (
 # --- логотип: полоса контента из макета (диафрагма → подпись) ------------------
 LOGO_W, LOGO_H = 1080.0, 792.0
 
-APERTURE_CENTER = (539.0, 262.0)
-APERTURE_DIAMETER = 517.0
-APERTURE_UNITS = 66.0
-APERTURE_R = APERTURE_UNITS / 2
-APERTURE_HOLE_R = 13.5
-APERTURE_SLIT_DELTA = 47.0
-APERTURE_SLIT_HALF = 1.15
 MINT = "#FF98E2C3"
 
 WORDMARK = dict(text="SnapMeal", font="Manrope-700.ttf", width=646.0, left=216.0, top=592.0)
@@ -66,31 +61,6 @@ def circle_data(cx: float, cy: float, r: float) -> str:
         f"a{r:.1f},{r:.1f} 0 1,1 {2 * r:.1f},0 "
         f"a{r:.1f},{r:.1f} 0 1,1 {-2 * r:.1f},0 Z"
     )
-
-
-def aperture_path() -> str:
-    """Диск + шестиугольное отверстие + 6 прорезей одним контуром (evenOdd)."""
-    k = APERTURE_DIAMETER / APERTURE_UNITS
-    cx, cy = APERTURE_CENTER
-
-    def polar(radius: float, angle_deg: float) -> tuple[float, float]:
-        angle = math.radians(angle_deg - 90.0)
-        return cx + radius * k * math.cos(angle), cy + radius * k * math.sin(angle)
-
-    parts = [circle_data(cx, cy, APERTURE_R * k)]
-    hole = [polar(APERTURE_HOLE_R, index * 60.0) for index in range(6)]
-    parts.append("M" + " L".join(f"{x:.2f},{y:.2f}" for x, y in hole) + " Z")
-
-    for index in range(6):
-        angle = index * 60.0
-        x0, y0 = polar(APERTURE_HOLE_R, angle)
-        x1, y1 = polar(APERTURE_R, angle + APERTURE_SLIT_DELTA)
-        dx, dy = x1 - x0, y1 - y0
-        length = math.hypot(dx, dy)
-        nx, ny = -dy / length * APERTURE_SLIT_HALF * k, dx / length * APERTURE_SLIT_HALF * k
-        quad = [(x0 + nx, y0 + ny), (x1 + nx, y1 + ny), (x1 - nx, y1 - ny), (x0 - nx, y0 - ny)]
-        parts.append("M" + " L".join(f"{x:.2f},{y:.2f}" for x, y in quad) + " Z")
-    return " ".join(parts)
 
 
 def text_outline(spec: dict) -> str:
@@ -189,7 +159,6 @@ LOGO_VECTOR = """<?xml version="1.0" encoding="utf-8"?>
 
     <path
         android:fillColor="{mint}"
-        android:fillType="evenOdd"
         android:pathData="{aperture}" />
 
     <path
@@ -218,7 +187,7 @@ def main() -> None:
 
     logo = LOGO_VECTOR.format(
         mint=MINT,
-        aperture=aperture_path(),
+        aperture=traced_aperture(),
         wordmark=text_outline(WORDMARK),
         tagline=text_outline(TAGLINE),
     )

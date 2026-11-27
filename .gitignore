@@ -19,3 +19,5 @@ captures/
 .dsh/
 artifacts/release/
 artifacts/splash-shots/
+__pycache__/
+*.pyc
