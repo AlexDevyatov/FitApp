@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Пустая иконка системного splash. Android 12+ перед первым кадром рисует только цвет фона
+    и эту иконку; цвет у нас совпадает с верхом макета, а иконка прозрачная — поэтому системного
+    экрана как отдельной картинки не видно: он читается как ровный изумрудный фон под сплэш.
+    Сам сплэш (градиент, пятна, диафрагма и надписи) рисует Compose из ic_splash_bg + ic_splash_logo.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M0,0 H108 V108 H0 Z" />
+</vector>

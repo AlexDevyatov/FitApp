@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">SnapMeal</string>
-    <string name="splash_tagline">Дневник питания по фото</string>
 
     <!-- Статусы карточек -->
     <string name="status_pending">Ожидает</string>

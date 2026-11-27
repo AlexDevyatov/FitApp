@@ -9,6 +9,7 @@
     <!-- Окно до первого кадра Compose: цвет = background темы, чтобы не мигало белым. -->
     <color name="window_background">#F4F1E8</color>
 
-    <!-- Системный splash (Android 12+): сплошной изумруд одинаков в обеих темах. -->
-    <color name="splash_background">#0E6B4F</color>
+    <!-- Системный splash (Android 12+): тот же изумруд, что в первом кадре векторного фона,
+         иначе на стыке «системный экран → Compose» видна смена оттенка. -->
+    <color name="splash_background">#10553C</color>
 </resources>

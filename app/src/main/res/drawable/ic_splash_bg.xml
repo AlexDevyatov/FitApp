@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Фон сплэша SnapMeal: градиент и два световых пятна. Тянется на весь экран.
+     Сгенерировано splash/make_splash_vector.py — правь скрипт, а не файл руками. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="360dp"
+    android:height="803dp"
+    android:viewportWidth="1080"
+    android:viewportHeight="2408">
+
+    <path android:pathData="M0,0 H1080 V2408 H0 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="linear"
+                android:startX="0"
+                android:startY="0"
+                android:endX="0"
+                android:endY="2408">
+                <item android:offset="0" android:color="#FF10553C" />
+                <item android:offset="1" android:color="#FF0D4F3A" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <path android:pathData="M-600.0,-60.0 a560.0,560.0 0 1,1 1120.0,0 a560.0,560.0 0 1,1 -1120.0,0 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="radial"
+                android:centerX="-40"
+                android:centerY="-60"
+                android:gradientRadius="560">
+                <item android:offset="0" android:color="#FFBFE56F" />
+                <item android:offset="1" android:color="#00BFE56F" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <path android:pathData="M560.0,2320.0 a620.0,620.0 0 1,1 1240.0,0 a620.0,620.0 0 1,1 -1240.0,0 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="radial"
+                android:centerX="1180"
+                android:centerY="2320"
+                android:gradientRadius="620">
+                <item android:offset="0" android:color="#FFFFB77D" />
+                <item android:offset="1" android:color="#00FFB77D" />
+            </gradient>
+        </aapt:attr>
+    </path>
+</vector>

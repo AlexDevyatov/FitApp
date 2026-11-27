@@ -9,35 +9,29 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Canvas
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.size
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.delay
@@ -62,28 +56,18 @@ import ru.fitapp.work.ReportNotifier
  * Логи (tag `FitAppUI`): какой экран открывается на старте. Отвечает на «меня снова
  * кинуло в онбординг» без догадок.
  *
- * Splash: системный экран (Theme.FitApp.Splash) держится, пока не прочитаны стартовые
- * настройки, но не дольше [SPLASH_TIMEOUT_MS]. Под ним сразу брендированный слой
- * Compose с тем же изумрудом и той же диафрагмой, поэтому перехода не видно.
+ * Splash: системный экран (Theme.FitApp.Splash) не держим вовсе — он умеет показать только
+ * ровный цвет, поэтому уходит вместе с первым кадром. Дальше секунду живёт настоящий сплэш
+ * из макета ([SPLASH_MIN_VISIBLE_MS]), его рисует Compose из двух векторов.
  */
 class MainActivity : ComponentActivity() {
 
-    /** Стартовые данные прочитаны либо сработал таймаут — системный splash можно убирать. */
-    private val startupReady = MutableStateFlow(false)
-
     override fun onCreate(savedInstanceState: Bundle?) {
         // installSplashScreen() обязан вызываться до super.onCreate: тема активна только сейчас.
-        val splash = installSplashScreen()
-        splash.setKeepOnScreenCondition { !startupReady.value }
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         Log.i(LogTags.UI, "ui: MainActivity.onCreate")
         enableEdgeToEdge()
-
-        // Страховка: если DataStore почему-то молчит, splash не должен висеть вечно.
-        lifecycleScope.launch {
-            delay(SPLASH_TIMEOUT_MS)
-            startupReady.value = true
-        }
 
         setContent {
             val app = LocalContext.current.applicationContext as FitAppApplication
@@ -95,102 +79,83 @@ class MainActivity : ComponentActivity() {
                 else -> systemDark
             }
             FitAppTheme(darkTheme = isDark) {
-                FitAppRoot(onStartupDataReady = { startupReady.value = true })
+                FitAppRoot()
             }
         }
     }
-
-    private companion object {
-        /** Сколько максимум держим системный splash, мс. */
-        const val SPLASH_TIMEOUT_MS = 900L
-    }
 }
 
+/** Сколько показываем сплэш с макета, мс. */
+private const val SPLASH_MIN_VISIBLE_MS = 1000L
+
 @Composable
-private fun FitAppRoot(onStartupDataReady: () -> Unit) {
+private fun FitAppRoot() {
     val app = LocalContext.current.applicationContext as FitAppApplication
     val onboardingCompleted by app.settingsStore.onboardingCompleted.collectAsState(initial = null)
+
+    // Отсчёт начинается не от композиции, а от первого кадра: холодный старт занимает ~750 мс,
+// и без этого от секунды оставалось бы 250 мс — сплэш успевал мигнуть.
+    var splashMinElapsed by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        withFrameNanos { }
+        delay(SPLASH_MIN_VISIBLE_MS)
+        splashMinElapsed = true
+    }
+
     LaunchedEffect(onboardingCompleted) {
         val completed = onboardingCompleted ?: return@LaunchedEffect
-        // Данные пришли — системный splash больше не нужен, дальше рисует Compose.
-        onStartupDataReady()
         Log.i(LogTags.UI, "ui: стартовый экран=${if (completed) "today" else "onboarding/key"}")
     }
-    when (val completed = onboardingCompleted) {
-        // Пока настройки не прочитаны, показываем брендированный слой, а не пустой спиннер.
-        null -> FitAppSplashLayer()
-        else -> {
-            if (completed) {
+
+    val completed = onboardingCompleted
+    val splashVisible = completed == null || !splashMinElapsed
+    val splashAlpha by animateFloatAsState(
+        targetValue = if (splashVisible) 1f else 0f,
+        animationSpec = tween(durationMillis = 180),
+        label = "splashAlpha",
+    )
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        if (completed != null) {
+            // Диалог разрешения не должен всплывать поверх сплэша, поэтому гейт — под ним.
+            if (!splashVisible) {
                 NotificationPermissionGate(app)
             }
             FitAppNavHost(startOnboarding = !completed)
+        }
+        if (splashAlpha > 0f) {
+            Box(modifier = Modifier.fillMaxSize().alpha(splashAlpha)) {
+                FitAppSplashLayer()
+            }
         }
     }
 }
 
 /**
- * Брендированный слой splash: градиент изумруд→хвоя, те же световые пятна, что в макете
- * `splash/v8-snapmeal.png`, диафрагма и логотип. Полностью совпадает с системным splash
- * по фону и глифу, поэтому переход «системный экран → Compose» не читается как мигание.
+ * Сплэш SnapMeal — два вектора, ни одного растра.
+ *
+ * Фон (`ic_splash_bg`) тянется на весь экран без сохранения пропорций: это градиент с мягкими
+ * пятнами, любая растяжка в нём невидима. Логотип (`ic_splash_logo` — диафрагма и надписи
+ * в кривых Manrope) масштабируется с сохранением пропорций и стоит по центру, поэтому круглая
+ * диафрагма остаётся круглой и на 9:16, и на 9:20.
  */
 @Composable
 private fun FitAppSplashLayer() {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                Brush.linearGradient(
-                    colors = listOf(Color(0xFF0E6B4F), Color(0xFF0A4A37)),
-                    start = Offset.Zero,
-                    end = Offset.Infinite,
-                ),
-            ),
-    ) {
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            val limeCenter = Offset(size.width * 0.16f, size.height * 0.12f)
-            drawCircle(
-                brush = Brush.radialGradient(
-                    colors = listOf(Color(0xFFC8F26A).copy(alpha = 0.55f), Color.Transparent),
-                    center = limeCenter,
-                    radius = size.width * 0.85f,
-                ),
-                radius = size.width * 0.85f,
-                center = limeCenter,
-            )
-            val peachCenter = Offset(size.width * 0.92f, size.height * 0.88f)
-            drawCircle(
-                brush = Brush.radialGradient(
-                    colors = listOf(Color(0xFFFFB77D).copy(alpha = 0.45f), Color.Transparent),
-                    center = peachCenter,
-                    radius = size.width * 0.70f,
-                ),
-                radius = size.width * 0.70f,
-                center = peachCenter,
-            )
-        }
-
-        Column(
-            modifier = Modifier.align(Alignment.Center),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Image(
-                painter = painterResource(R.drawable.ic_splash_shutter),
-                contentDescription = null,
-                modifier = Modifier.size(144.dp),
-            )
-            Spacer(modifier = Modifier.height(36.dp))
-            Text(
-                text = stringResource(R.string.app_name),
-                color = Color.White,
-                style = MaterialTheme.typography.displaySmall,
-            )
-            Spacer(modifier = Modifier.height(10.dp))
-            Text(
-                text = stringResource(R.string.splash_tagline),
-                color = Color.White.copy(alpha = 0.72f),
-                style = MaterialTheme.typography.bodyMedium,
-            )
-        }
+    Box(modifier = Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(R.drawable.ic_splash_bg),
+            contentDescription = null,
+            contentScale = ContentScale.FillBounds,
+            modifier = Modifier.fillMaxSize(),
+        )
+        Image(
+            painter = painterResource(R.drawable.ic_splash_logo),
+            contentDescription = null,
+            contentScale = ContentScale.Fit,
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.Center),
+        )
     }
 }
 

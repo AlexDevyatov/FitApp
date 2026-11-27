@@ -3,7 +3,7 @@
 Обзорный лист: [variants-sheet.png](variants-sheet.png). Восемь полноразмерных вариантов
 (1080×1920): `v1-ring-on-paper.png` … `v8-snapmeal.png`. Промпты лежат рядом
 (`*.prompt.txt`), генератор — [generate.ps1](generate.ps1), сборка листа — [build_sheet.py](build_sheet.py),
-вектор диафрагмы — [make_shutter_vector.py](make_shutter_vector.py).
+вектор сплэша — [make_splash_vector.py](make_splash_vector.py).
 
 **Выбран вариант 7** — «Полдень с затвором»: градиент из варианта 6, но герой не кольцо,
 а диафрагма камеры.
@@ -184,32 +184,31 @@ Splash здесь — не украшение, а **шов между систе
 
 1. Зависимость: `implementation("androidx.core:core-splashscreen:1.0.1")`
    (нативная реализация на API 31+, бэкпорт на 26–30; AppCompat не требуется).
-2. Ресурсы: `@color/splash_background` = `#0E6B4F`; `@drawable/ic_splash_shutter` — вектор
-   диафрагмы, вписанный в безопасную зону.
+2. Ресурсы: `@color/splash_background` = `#10553C` (верхняя точка векторного фона) и
+   `@drawable/ic_splash_blank` — прозрачная иконка: системный экран не должен показывать ничего своего.
 3. Темы:
 
 ```xml
 <style name="Theme.FitApp.Splash" parent="Theme.SplashScreen">
     <item name="windowSplashScreenBackground">@color/splash_background</item>
-    <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_shutter</item>
+    <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_blank</item>
     <item name="windowSplashScreenAnimationDuration">600</item>
     <item name="postSplashScreenTheme">@style/Theme.FitApp</item>
 </style>
 ```
 
-4. `MainActivity`: `installSplashScreen()` до `super.onCreate`, затем
-   `setKeepOnScreenCondition { onboardingCompleted == null }` — и удалить голый
-   `CircularProgressIndicator` из `FitAppRoot`, он больше не нужен.
+4. `MainActivity`: `installSplashScreen()` до `super.onCreate` — и всё. Системный экран не
+   держим: он умеет показать только цвет, а сплэш рисует Compose. Сам сплэш живёт
+   `SPLASH_MIN_VISIBLE_MS = 1000` мс, причём отсчёт идёт от **первого кадра**
+   (`withFrameNanos`), а не от компоновки: холодный старт занимает ~0.75 с, и иначе от
+   секунды оставалось бы 250 мс.
 5. Почистить `colors.xml`: старые `#2E7D32 / #1B5E20 / #8BC34A / #FAFAFA` заменить на роли
    темы (`splash_background`, `primary`, `secondary`), `windowBackground` — на `background`.
-6. Глиф: вектор 108×108, содержимое в центральных 66×66 (то же правило, что для adaptive icon).
-   **Просветы между лепестками на градиенте должны быть прозрачными, а не залитыми тёмным:**
-   в растре модель рисует их цветом фона, в Compose это один path с `fillType="evenOdd"`,
-   иначе на градиенте появятся тёмные клинья.
-7. Светлая тема: `splash_background` для v7 не нужен — изумруд одинаков в обеих темах.
-   Но если пользователь выбрал светлую тему на тёмной системе, системный splash всё равно
-   будет по системному night-mode (приложение узнаёт настройку только после чтения
-   DataStore). Для v7 это не страшно: фон-изумруд не конфликтует с обоими режимами.
+6. Просветы диафрагмы прозрачные (`fillType="evenOdd"`), иначе на градиенте появятся
+   тёмные клинья: в растре модель заливает их цветом фона, в векторе это дырки.
+7. Светлая и тёмная темы: `splash_background` одинаковый (#10553C) — изумрудный сплэш
+   не конфликтует с обоими режимами. `window_background` при этом разный (крем/#101613),
+   он виден только за краями сплэша.
 
 Чего избегать: градиента в `windowSplashScreenBackground` (не поддерживается), текста
 на растре (надпись рисуется шрифтом Manrope), обводок у глифа (в 48 dp заплывают).
@@ -218,13 +217,25 @@ Splash здесь — не украшение, а **шов между систе
 
 | Файл | Что |
 |---|---|
-| [`res/drawable/ic_splash_shutter.xml`](../app/src/main/res/drawable/ic_splash_shutter.xml) | вектор диафрагмы: диск + шестиугольное отверстие + 6 прорезей, `fillType="evenOdd"` |
+| [`res/drawable/ic_splash_bg.xml`](../app/src/main/res/drawable/ic_splash_bg.xml) | фон: вертикальный градиент `#10553C → #0D4F3A` и два радиальных пятна (лайм из левого верхнего угла, персик из правого нижнего). Тянется `FillBounds` |
+| [`res/drawable/ic_splash_logo.xml`](../app/src/main/res/drawable/ic_splash_logo.xml) | логотип: диафрагма и надписи в кривых Manrope. Масштабируется `Fit`, поэтому круг остаётся кругом |
+| [`res/drawable/ic_splash_blank.xml`](../app/src/main/res/drawable/ic_splash_blank.xml) | прозрачная иконка системного splash: Android рисует только цвет фона, а сплэш целиком — Compose |
 | [`res/values/themes.xml`](../app/src/main/res/values/themes.xml) | `Theme.FitApp.Splash` (`Theme.SplashScreen`), изумрудный фон, `postSplashScreenTheme` |
-| [`res/values/colors.xml`](../app/src/main/res/values/colors.xml) | `splash_background` `#0E6B4F`, `window_background` = крем из темы (был `#FAFAFA`) |
+| [`res/values/colors.xml`](../app/src/main/res/values/colors.xml) | `splash_background` `#10553C` (тон первого кадра векторного фона), `window_background` = крем из темы (был `#FAFAFA`) |
 | [`res/values-night/colors.xml`](../app/src/main/res/values-night/colors.xml) | `window_background` `#101613` для тёмной темы |
 | [`AndroidManifest.xml`](../app/src/main/AndroidManifest.xml) | у `MainActivity` тема `@style/Theme.FitApp.Splash` |
-| [`ui/MainActivity.kt`](../app/src/main/java/ru/fitapp/ui/MainActivity.kt) | `installSplashScreen()` + `setKeepOnScreenCondition` (данные или 900 мс), брендированный слой вместо голого спиннера |
-| [`app/build.gradle.kts`](../app/build.gradle.kts) | `androidx.core:core-splashscreen:1.0.1`, версия 0.2.1 |
+| [`ui/MainActivity.kt`](../app/src/main/java/ru/fitapp/ui/MainActivity.kt) | `installSplashScreen()` без удержания системного экрана; сплэш живёт 1 с от первого кадра, потом fade 180 мс |
+| [`app/build.gradle.kts`](../app/build.gradle.kts) | `androidx.core:core-splashscreen:1.0.1`, версия 0.2.1 / `versionCode 6` |
+
+Почему два вектора, а не один: у фона и логотипа разная судьба при растягивании. Фон — это
+мягкий градиент, ему можно тянуться на любое соотношение сторон (`FillBounds`), швов не видно.
+Логотип обязан сохранять пропорции (`Fit`), иначе диафрагма превратится в овал. Один общий
+drawable на 9:20 пришлось бы либо обрезать (`Crop` — текст и круг растут), либо подкладывать
+полями (`Fit` — полосы по краям).
+
+Растра в сборке нет: `ic_splash_logo.xml` — 33 КБ обводок, снятых с Manrope через fontTools,
+против ~1.2 МБ PNG на ту же картинку. Ровно поэтому текст на сплэше и в интерфейсе совпадает
+по рисунку буквы, а не «примерно похож».
 
 ---
 
@@ -237,10 +248,9 @@ splash/
   v1..v8-*.prompt.txt        промпт каждого варианта
   _style.txt                 общий стилевой слой
   _negative.txt              negative prompt
-  _shutter-vector-preview.png  как выглядит вектор диафрагмы в 1080 px
   generate.ps1               перегенерация: powershell -ExecutionPolicy Bypass -File .\splash\generate.ps1 -All
   build_sheet.py             пересборка листа: python splash\build_sheet.py
-  make_shutter_vector.py     пересчёт вектора: python splash\make_shutter_vector.py
+  make_splash_vector.py      фон и логотип сплэша: python splash\make_splash_vector.py
 ```
 
 Модель — `qwen-image-3.0-pro` (через скилл `text-to-image`), размер `1080*1920`, `n=1`.
@@ -248,7 +258,7 @@ splash/
 с `-Encoding UTF8` — Windows PowerShell 5.1 иначе декодирует их как ANSI и отправляет
 в модель мусор (это уже случилось на первом прогоне).
 
-Картинки — концепт-направление, а не готовые ассеты: геометрия перерисована вектором
-(`ic_splash_shutter.xml`, генератор — `make_shutter_vector.py`), а надпись в приложении
-рисует Compose шрифтом Manrope. Для кольцевых вариантов, если понадобятся, брать 220 dp
+Картинки `v1…v8` — концепт-направление, а не готовые ассеты: в сборку они не попадают.
+Финальный сплэш пересобран вектором (`ic_splash_bg.xml` + `ic_splash_logo.xml`, генератор —
+`make_splash_vector.py`). Для кольцевых вариантов, если понадобятся, брать 220 dp
 и штрих 14 dp из `tokens.json`, иначе на плотных экранах толщина «плывёт».
