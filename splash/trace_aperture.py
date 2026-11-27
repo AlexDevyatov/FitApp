@@ -29,10 +29,10 @@ from PIL import Image
 HERE = Path(__file__).resolve().parent
 MOCKUP = HERE / "v8-snapmeal.png"
 
-# Окно трассировки в пикселях макета: диафрагма занимает 284..794 по X и 566..1090 по Y.
+# Окно трассировки в пикселях макета: диафрагма занимает 283..796 по X и 562..1091 по Y.
+# Верх окна и есть начало координат полотна логотипа: так над диафрагмой остаётся
+# 10 единиц запаса и контур не упирается в край viewport (иначе верх сплющивался).
 CROP = (270, 552, 810, 1104)
-# Сдвиг: полотно логотипа начинается на строке 566 макета и имеет высоту 792.
-Y_OFFSET = 566
 LUMA_THRESHOLD = 140
 SIMPLIFY_EPS = 0.9
 
@@ -87,16 +87,17 @@ def blade_contours() -> list[np.ndarray]:
 
 
 def path_data() -> str:
+    # Контур снят в координатах окна, а окно и есть полотно логотипа: сдвиг только по X,
+    # потому что окно начинается от левого края макета.
     x_shift = CROP[0]
-    y_shift = CROP[1] - Y_OFFSET
     parts: list[str] = []
     for segment in blade_contours():
         points = simplify(segment, SIMPLIFY_EPS)
         if len(points) < 3:
             continue
         start = points[0]
-        chunk = [f"M{start[0] + x_shift:.1f},{start[1] + y_shift:.1f}"]
-        chunk += [f"L{x + x_shift:.1f},{y + y_shift:.1f}" for x, y in points[1:]]
+        chunk = [f"M{start[0] + x_shift:.1f},{start[1]:.1f}"]
+        chunk += [f"L{x + x_shift:.1f},{y:.1f}" for x, y in points[1:]]
         chunk.append("Z")
         parts.append(" ".join(chunk))
     return " ".join(parts)

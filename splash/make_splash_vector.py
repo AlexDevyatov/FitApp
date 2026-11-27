@@ -16,6 +16,7 @@
 from __future__ import annotations
 
 import math
+import re
 from pathlib import Path
 
 from fontTools.pens.boundsPen import BoundsPen
@@ -44,12 +45,14 @@ BLOBS = (
 )
 
 # --- логотип: полоса контента из макета (диафрагма → подпись) ------------------
-LOGO_W, LOGO_H = 1080.0, 792.0
+# Полотно начинается на строке 552 макета — на 10 единиц выше диафрагмы,
+# чтобы её верх не упирался в край и не сплющивался.
+LOGO_W, LOGO_H = 1080.0, 806.0
 
 MINT = "#FF98E2C3"
 
-WORDMARK = dict(text="SnapMeal", font="Manrope-700.ttf", width=646.0, left=216.0, top=592.0)
-TAGLINE = dict(text="Дневник питания по фото", font="Manrope-500.ttf", width=526.0, left=284.0, top=756.0)
+WORDMARK = dict(text="SnapMeal", font="Manrope-700.ttf", width=646.0, left=216.0, top=606.0)
+TAGLINE = dict(text="Дневник питания по фото", font="Manrope-500.ttf", width=526.0, left=284.0, top=770.0)
 
 
 # --- общее -------------------------------------------------------------------
@@ -153,9 +156,9 @@ LOGO_VECTOR = """<?xml version="1.0" encoding="utf-8"?>
      Сгенерировано splash/make_splash_vector.py — правь скрипт, а не файл руками. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="360dp"
-    android:height="264dp"
+    android:height="{logo_dp:.2f}dp"
     android:viewportWidth="1080"
-    android:viewportHeight="792">
+    android:viewportHeight="{logo_h:.0f}">
 
     <path
         android:fillColor="{mint}"
@@ -172,6 +175,14 @@ LOGO_VECTOR = """<?xml version="1.0" encoding="utf-8"?>
 """
 
 
+def path_bounds(data: str) -> tuple[float, float, float, float]:
+    """Габариты pathData по опорным точкам — чтобы поймать вылет за viewport."""
+    numbers = [float(value) for value in re.findall(r"-?\d+\.?\d*", data)]
+    xs = numbers[0::2]
+    ys = numbers[1::2]
+    return min(xs), min(ys), max(xs), max(ys)
+
+
 def main() -> None:
     blobs = "".join(
         BLOB.format(
@@ -185,11 +196,19 @@ def main() -> None:
     BG_TARGET.write_text(bg, encoding="utf-8")
     print(f"{BG_TARGET}  ({len(bg) / 1024:.1f} KB)")
 
+    aperture = traced_aperture()
+    x0, y0, x1, y1 = path_bounds(aperture)
+    print(f"диафрагма: x {x0:.1f}..{x1:.1f}, y {y0:.1f}..{y1:.1f}")
+    if y0 < 0 or x0 < 0 or y1 > LOGO_H or x1 > LOGO_W:
+        raise SystemExit("контур вылез за полотно логотипа — обрежется на сплэше")
+
     logo = LOGO_VECTOR.format(
         mint=MINT,
-        aperture=traced_aperture(),
+        aperture=aperture,
         wordmark=text_outline(WORDMARK),
         tagline=text_outline(TAGLINE),
+        logo_h=LOGO_H,
+        logo_dp=LOGO_H * 360.0 / LOGO_W,
     )
     LOGO_TARGET.write_text(logo, encoding="utf-8")
     print(f"{LOGO_TARGET}  ({len(logo) / 1024:.1f} KB)")
