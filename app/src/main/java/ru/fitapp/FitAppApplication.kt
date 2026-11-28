@@ -6,6 +6,7 @@ import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import ru.fitapp.ai.DishAnalyzer
 import ru.fitapp.ai.QwenAnalyzer
@@ -17,6 +18,7 @@ import ru.fitapp.data.db.AppDatabase
 import ru.fitapp.data.files.PhotoStore
 import ru.fitapp.data.prefs.ApiKeyStore
 import ru.fitapp.data.prefs.SettingsStore
+import ru.fitapp.ui.icon.AppIcon
 import ru.fitapp.work.EveningReportScheduler
 import ru.fitapp.work.ReportNotifier
 
@@ -76,6 +78,13 @@ class FitAppApplication : Application() {
         appScope.launch {
             runCatching { EveningReportScheduler.ensureScheduled(this@FitAppApplication) }
                 .onFailure { Log.e(LogTags.PUSH, "push: автопланирование при старте упало", it) }
+        }
+        // После обновления приложения манифест включает иконку по умолчанию, а выбор
+        // пользователя теряется: возвращаем сохранённый алиас на место.
+        appScope.launch {
+            runCatching {
+                AppIcon.reconcile(this@FitAppApplication, settingsStore.appIcon.first())
+            }.onFailure { Log.e(LogTags.UI, "icon: выбор иконки при старте не восстановлен", it) }
         }
     }
 

@@ -16,6 +16,7 @@ import ru.fitapp.core.LogTags
 import ru.fitapp.data.MealStats
 import ru.fitapp.data.prefs.SettingsStore
 import ru.fitapp.domain.DailyTargets
+import ru.fitapp.ui.icon.AppIcon
 import ru.fitapp.work.EveningReportScheduler
 
 /**
@@ -38,6 +39,10 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
     /** Тема: 0 = как в системе, 1 = светлая, 2 = тёмная. */
     val darkThemeMode: StateFlow<Int> = fitApp.settingsStore.darkThemeMode
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsStore.THEME_MODE_SYSTEM)
+
+    /** Выбранная иконка ярлыка (см. [ru.fitapp.ui.icon.AppIcon]). */
+    val appIcon: StateFlow<Int> = fitApp.settingsStore.appIcon
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
 
     val targets: StateFlow<DailyTargets?> = fitApp.profileRepository.targets
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
@@ -95,6 +100,18 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             Log.i(TAG, "settings: пользователь меняет тему mode=$mode")
             fitApp.settingsStore.setDarkThemeMode(mode)
+        }
+    }
+
+    /**
+     * Иконка ярлыка: выбор пишем в DataStore, а сам алиас в манифесте переключаем
+     * через PackageManager — система разрешает менять иконку только так.
+     */
+    fun setAppIcon(icon: AppIcon) {
+        viewModelScope.launch {
+            Log.i(TAG, "settings: пользователь меняет иконку ${icon.alias}")
+            fitApp.settingsStore.setAppIcon(icon.id)
+            AppIcon.apply(getApplication(), icon)
         }
     }
 

@@ -4,7 +4,8 @@
     <color name="primary">#0E6B4F</color>
     <color name="primary_dark">#0A4A37</color>
     <color name="accent">#C8F26A</color>
-    <color name="ic_launcher_background">#0E6B4F</color>
+    <!-- Цвета иконки (ic_launcher_background и фон вариантов) — в ic_launcher_colors.xml:
+         файл генерируется icons/build_icons_v6.py вместе с самими иконками. -->
 
     <!-- Окно до первого кадра Compose: цвет = background темы, чтобы не мигало белым. -->
     <color name="window_background">#F4F1E8</color>

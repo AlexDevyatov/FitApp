@@ -339,6 +339,19 @@
     <string name="settings_theme_light">Светлая</string>
     <string name="settings_theme_dark">Тёмная</string>
 
+    <!-- Иконка приложения: те же шесть вариантов, что в icons/v6-* -->
+    <string name="settings_icon_title">Иконка приложения</string>
+    <string name="settings_icon_hint">Знак с диафрагмой со сплэша, меняется только фон</string>
+    <string name="settings_icon_note">Ярлык на главном экране обновится сразу. На некоторых лончерах его придётся добавить заново.</string>
+    <string name="settings_icon_splash">Изумруд</string>
+    <string name="settings_icon_glow">Свечение</string>
+    <string name="settings_icon_cream">Крем</string>
+    <string name="settings_icon_lime">Лайм</string>
+    <string name="settings_icon_night">Ночь</string>
+    <string name="settings_icon_ring">Кольцо</string>
+    <string name="settings_icon_updated">Иконка обновлена</string>
+    <string name="cd_app_icon_option">Иконка %1$s</string>
+
     <!-- Редизайн: съёмка -->
     <string name="capture_flash">Вспышка</string>
 </resources>

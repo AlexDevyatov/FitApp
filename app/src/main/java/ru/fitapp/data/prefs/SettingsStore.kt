@@ -46,6 +46,14 @@ class SettingsStore(context: Context) {
     val darkThemeMode: Flow<Int> =
         dataStore.data.map { (it[KEY_DARK_THEME_MODE] ?: THEME_MODE_SYSTEM).coerceIn(THEME_MODE_SYSTEM, THEME_MODE_DARK) }
 
+    /**
+     * Выбранная иконка ярлыка: 0..5 — id из `ui.icon.AppIcon`, по умолчанию 0
+     * (мята на изумруде, как на сплэше). Сама иконка включается через PackageManager,
+     * здесь хранится только выбор — чтобы восстановить его после обновления.
+     */
+    val appIcon: Flow<Int> =
+        dataStore.data.map { (it[KEY_APP_ICON] ?: 0).coerceIn(0, APP_ICON_MAX) }
+
     suspend fun setOnboardingCompleted(completed: Boolean) {
         dataStore.edit { it[KEY_ONBOARDING_COMPLETED] = completed }
         Log.i(TAG, "settings: onboarding_completed=$completed")
@@ -73,6 +81,12 @@ class SettingsStore(context: Context) {
         Log.i(TAG, "settings: dark_theme_mode=$clamped")
     }
 
+    suspend fun setAppIcon(id: Int) {
+        val clamped = id.coerceIn(0, APP_ICON_MAX)
+        dataStore.edit { it[KEY_APP_ICON] = clamped }
+        Log.i(TAG, "settings: app_icon=$clamped")
+    }
+
     companion object {
         private const val TAG = LogTags.DATA
 
@@ -87,10 +101,14 @@ class SettingsStore(context: Context) {
         /** Всегда тёмная. */
         const val THEME_MODE_DARK = 2
 
+        /** Последний id иконки в `ui.icon.AppIcon`: за ним выбор не уходит. */
+        const val APP_ICON_MAX = 5
+
         private val KEY_ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
         private val KEY_PUSH_ENABLED = booleanPreferencesKey("push_enabled")
         private val KEY_PUSH_HOUR = intPreferencesKey("push_hour")
         private val KEY_NOTIFICATION_ASKED = booleanPreferencesKey("notification_asked")
         private val KEY_DARK_THEME_MODE = intPreferencesKey("dark_theme_mode")
+        private val KEY_APP_ICON = intPreferencesKey("app_icon")
     }
 }

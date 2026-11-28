@@ -8,7 +8,9 @@ import android.provider.Settings
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -38,6 +40,7 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.BrightnessAuto
+import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -57,11 +60,17 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -69,6 +78,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import kotlinx.coroutines.launch
 import ru.fitapp.R
 import ru.fitapp.core.LogTags
 import ru.fitapp.data.prefs.SettingsStore
@@ -80,6 +90,8 @@ import ru.fitapp.ui.common.SettingsGroup
 import ru.fitapp.ui.common.SettingsRow
 import ru.fitapp.ui.factoryOf
 import ru.fitapp.ui.fitApp
+import ru.fitapp.ui.icon.AppIcon
+import ru.fitapp.ui.icon.IconBackground
 import ru.fitapp.work.ReportNotifier
 
 /** Тег уведомлений: решение пользователя по POST_NOTIFICATIONS. */
@@ -96,10 +108,12 @@ fun SettingsScreen(navController: NavController) {
     val pushEnabled by vm.pushEnabled.collectAsState()
     val pushHour by vm.pushHour.collectAsState()
     val darkThemeMode by vm.darkThemeMode.collectAsState()
+    val appIcon by vm.appIcon.collectAsState()
     val targets by vm.targets.collectAsState()
 
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
     var showClearKeyDialog by remember { mutableStateOf(false) }
     var showHourDialog by remember { mutableStateOf(false) }
 
@@ -221,6 +235,55 @@ fun SettingsScreen(navController: NavController) {
                         modifier = Modifier.weight(1f),
                     )
                 }
+
+                HorizontalDivider(
+                    modifier = Modifier.padding(start = 74.dp),
+                    color = MaterialTheme.colorScheme.outlineVariant,
+                )
+                SettingsRow(
+                    icon = Icons.Filled.GridView,
+                    title = stringResource(R.string.settings_icon_title),
+                    subtitle = stringResource(R.string.settings_icon_hint),
+                )
+                // Сетка 3×2: шесть иконок — один признак с двумя состояниями каждый,
+                // поэтому строки-радиокнопки были бы длиннее примерно вдвое.
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 4.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    AppIcon.entries.chunked(3).forEach { row ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
+                            row.forEach { option ->
+                                IconOption(
+                                    icon = option,
+                                    selected = option.id == appIcon,
+                                    onClick = {
+                                        if (option.id != appIcon) {
+                                            vm.setAppIcon(option)
+                                            scope.launch {
+                                                snackbarHostState.showSnackbar(
+                                                    context.getString(R.string.settings_icon_updated),
+                                                )
+                                            }
+                                        }
+                                    },
+                                    modifier = Modifier.weight(1f),
+                                )
+                            }
+                        }
+                    }
+                }
+                Text(
+                    stringResource(R.string.settings_icon_note),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 16.dp),
+                )
             }
 
             SettingsGroup(title = stringResource(R.string.settings_group_reminders)) {
@@ -516,6 +579,103 @@ private fun MacroSummary(label: String, grams: Int?) {
             grams?.let { "$it г" } ?: "—",
             style = MaterialTheme.typography.titleMedium,
         )
+    }
+}
+
+/**
+ * Одна иконка в сетке выбора: круглая маска лончера не нужна — рисуем squircle,
+ * выбранная обводится кольцом цвета primary.
+ */
+@Composable
+private fun IconOption(
+    icon: AppIcon,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val scheme = MaterialTheme.colorScheme
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(18.dp))
+            .clickable(onClick = onClick)
+            .padding(vertical = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Box(modifier = Modifier.size(68.dp), contentAlignment = Alignment.Center) {
+            if (selected) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .border(2.dp, scheme.primary, RoundedCornerShape(20.dp)),
+                )
+            }
+            AppIconPreview(icon = icon, modifier = Modifier.size(60.dp))
+        }
+        Text(
+            text = stringResource(icon.title),
+            style = MaterialTheme.typography.labelSmall,
+            color = if (selected) scheme.primary else scheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center,
+        )
+    }
+}
+
+/** Превью иконки ровно из тех же ресурсов, что уходят в лончер: фон + знак. */
+@Composable
+private fun AppIconPreview(icon: AppIcon, modifier: Modifier = Modifier) {
+    val description = stringResource(R.string.cd_app_icon_option, stringResource(icon.title))
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(18.dp))
+            .drawBehind { drawIconBackground(icon.background) },
+    ) {
+        Image(
+            painter = painterResource(icon.foreground),
+            contentDescription = description,
+            modifier = Modifier.fillMaxSize(),
+        )
+    }
+}
+
+/** Фон иконки: сплошной цвет или градиент со свечением как на сплэше. */
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawIconBackground(background: IconBackground) {
+    when (background) {
+        is IconBackground.Solid -> drawRect(Color(background.argb))
+        IconBackground.Glow -> {
+            drawRect(
+                Brush.verticalGradient(
+                    listOf(Color(0xFF0F543B), Color(0xFF0D503A)),
+                    startY = 0f,
+                    endY = size.height,
+                ),
+            )
+            // Те же пятна, что в ic_launcher_background_glow.xml: центр за кадром.
+            val limeRadius = size.minDimension * 0.54f
+            val limeCenter = Offset(size.width * -0.04f, size.height * -0.03f)
+            drawCircle(
+                brush = Brush.radialGradient(
+                    listOf(Color(0xFFBFE56F), Color(0x00BFE56F)),
+                    center = limeCenter,
+                    radius = limeRadius,
+                ),
+                radius = limeRadius,
+                center = limeCenter,
+            )
+            val peachRadius = size.minDimension * 0.58f
+            val peachCenter = Offset(size.width * 1.09f, size.height * 0.97f)
+            drawCircle(
+                brush = Brush.radialGradient(
+                    listOf(Color(0xFFFFB77D), Color(0x00FFB77D)),
+                    center = peachCenter,
+                    radius = peachRadius,
+                ),
+                radius = peachRadius,
+                center = peachCenter,
+            )
+        }
     }
 }
 
