@@ -90,6 +90,7 @@ cd C:\work\fitapp; .\gradlew.bat testDebugUnitTest
 - Релиз [v0.1.0](https://github.com/AlexDevyatov/FitApp/releases/tag/v0.1.0) опубликован с `app-release.apk` и `app-release.aab`
 - Релиз [v0.2.0](https://github.com/AlexDevyatov/FitApp/releases/tag/v0.2.0) — напитки с отметкой «С сахаром», правка массы и пересчёт КБЖУ по названию; `versionName` 0.2.0, `versionCode` 5 (номер запуска), подпись проверена: `CN=FitApp`, APK Signature Scheme v2
 - Релиз [v0.2.1](https://github.com/AlexDevyatov/FitApp/releases/tag/v0.2.1) — SnapMeal: новое имя, сплэш с диафрагмой по макету, показ с первого кадра; `versionName` 0.2.1, `versionCode` 6 (номер запуска), подпись проверена
+- Релиз [v0.2.2](https://github.com/AlexDevyatov/FitApp/releases/tag/v0.2.2) — выбор иконки приложения из шести вариантов (шесть `activity-alias` в манифесте); `versionName` 0.2.2, `versionCode` 7 (номер запуска), подпись проверена
 
 Секреты `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD` уже добавлены в репозиторий.
 
