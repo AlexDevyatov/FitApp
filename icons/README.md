@@ -7,8 +7,18 @@
 [github-release-splash.png](../artifacts/release/github-release-splash.png): изумруд `#0F543B`/`#0D503A`,
 мята `#98E2C3`, лаймовое и персиковое свечение `#BFE56F`/`#FFB77D`; крем `#F4F1E8` и ночь `#101613` — из `Theme.kt`.
 
-Обзорный лист: [variants-sheet-v6.png](variants-sheet-v6.png). Каждый вариант — 1024×1024, круглая маска
-и превью 48 dp; в папке лежит готовый `res/` для adaptive icon.
+Обзорный лист: [variants-sheet-v6.png](variants-sheet-v6.png). Каждый вариант — 1024×1024
+(полный кадр adaptive icon 108 dp), `icon-circle.png` — то, что реально видит лончер: центральные
+72 dp под круговой маской, и превью 48 dp; в папке лежит готовый `res/` для adaptive icon.
+
+### Геометрия: почему знак 56 dp, а не 72
+
+Кадр adaptive icon — 108 dp, но лончер показывает только центральные 72 dp и режет их своей маской
+(круг, squircle, квадрат). Знак, растянутый на все 72 dp, на круглой иконке упирается в край: фона
+вокруг не видно, остаётся один затвор. Поэтому знак — 56 dp (безопасная зона по гайдлайнам — круг
+66 dp), кольцо в шестом варианте — 63 dp, и вокруг всегда остаётся ободок фона. Превью в
+«Настройки → Оформление → Иконка приложения» показывает те же 72 dp под круглой маской, поэтому
+совпадает с рабочим столом.
 
 | № | Папка | Идея | Когда уместна |
 |---|-------|------|---------------|
@@ -32,7 +42,7 @@
 
 | Ресурс | Что это |
 |---|---|
-| `drawable/ic_launcher_foreground{,_glow,_cream,_lime,_night,_ring}.xml` | знак в системе 108 dp, вписан в 72 dp |
+| `drawable/ic_launcher_foreground{,_glow,_cream,_lime,_night,_ring}.xml` | знак 56 dp в кадре 108 dp: внутри маски лончера остаётся ободок фона |
 | `drawable/ic_launcher_background_glow.xml` | градиент и два пятна для варианта «Свечение» |
 | `values/ic_launcher_colors.xml` | фоны остальных пяти (`ic_launcher_background*`) |
 | `mipmap-anydpi-v26/ic_launcher{,_glow,_cream,_lime,_night,_ring}.xml` | adaptive icon каждого варианта |

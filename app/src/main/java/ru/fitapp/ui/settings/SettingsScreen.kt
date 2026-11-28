@@ -66,6 +66,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -583,7 +584,7 @@ private fun MacroSummary(label: String, grams: Int?) {
 }
 
 /**
- * Одна иконка в сетке выбора: круглая маска лончера не нужна — рисуем squircle,
+ * Одна иконка в сетке выбора: превью в той же круглой маске, что у лончера,
  * выбранная обводится кольцом цвета primary.
  */
 @Composable
@@ -607,7 +608,7 @@ private fun IconOption(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .border(2.dp, scheme.primary, RoundedCornerShape(20.dp)),
+                        .border(2.dp, scheme.primary, CircleShape),
                 )
             }
             AppIconPreview(icon = icon, modifier = Modifier.size(60.dp))
@@ -623,20 +624,31 @@ private fun IconOption(
     }
 }
 
-/** Превью иконки ровно из тех же ресурсов, что уходят в лончер: фон + знак. */
+/** Маска лончера — центральные 72 dp из кадра 108 dp, значит кадр растягиваем в 108/72 раза. */
+private const val LAUNCHER_ICON_ZOOM = 108f / 72f
+
+/**
+ * Превью иконки из тех же ресурсов, что уходят в лончер: фон + знак, но показанные
+ * так, как их видит лончер, — центральные 72 dp из 108 dp под круглой маской.
+ * Если нарисовать весь кадр, в настройках иконка выглядит крупнее и «полнее»,
+ * чем на рабочем столе: лончер отрезает по 18 dp с каждой стороны.
+ */
 @Composable
 private fun AppIconPreview(icon: AppIcon, modifier: Modifier = Modifier) {
     val description = stringResource(R.string.cd_app_icon_option, stringResource(icon.title))
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(18.dp))
-            .drawBehind { drawIconBackground(icon.background) },
-    ) {
-        Image(
-            painter = painterResource(icon.foreground),
-            contentDescription = description,
-            modifier = Modifier.fillMaxSize(),
-        )
+    Box(modifier = modifier.clip(CircleShape)) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .scale(LAUNCHER_ICON_ZOOM)
+                .drawBehind { drawIconBackground(icon.background) },
+        ) {
+            Image(
+                painter = painterResource(icon.foreground),
+                contentDescription = description,
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
     }
 }
 

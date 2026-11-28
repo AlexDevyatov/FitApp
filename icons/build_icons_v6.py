@@ -6,8 +6,8 @@
 геометрия. Цвета сняты пипеткой с `artifacts/release/github-release-splash.png`:
 изумруд `#0F543B`/`#0D503A`, мята `#98E2C3`, лаймовое и персиковое свечение.
 
-Каждый вариант — 1024×1024 (полный кадр adaptive icon 108 dp) плюс превью под
-круглую маску и строка «как это выглядит в 48 dp».
+Каждый вариант — 1024×1024 (полный кадр adaptive icon 108 dp) плюс то, что реально
+видит лончер: центральные 72 dp из кадра под круговой маской, и превью 48 dp.
 
 Запуск: python icons/build_icons_v6.py
 """
@@ -27,8 +27,14 @@ FONTS = ROOT / "design" / "fonts"
 
 SIZE = 1024
 SS = 2  # суперсэмплинг: рисуем в 2048 и уменьшаем
-MARK_FRACTION = 0.66  # диаметр знака к стороне кадра: 72 dp из 108 dp — зона контента
-RING_MARK_FRACTION = 0.54  # в варианте с кольцом знак меньше: кольцо занимает 0.66
+# Лончер показывает центральные 72 dp из 108 dp и режет их своей маской. Знак
+# 56 dp оставляет вокруг себя видимый ободок фона; при прежних 72 dp знак
+# совпадал с маской, и на круглой иконке был виден только затвор.
+VISIBLE_FRACTION = 72 / 108  # диаметр маски лончера к стороне кадра
+MARK_FRACTION = 0.52  # 56 dp из 108 dp
+RING_MARK_FRACTION = 0.46  # в варианте с кольцом знак меньше: остаётся место кольцу
+RING_OUTER_FRACTION = 0.58  # внешний диаметр кольца — 63 dp
+RING_WIDTH_FRACTION = 0.017  # толщина кольца — 1.8 dp
 
 # --- палитра, снятая со сплэша и из Theme.kt --------------------------------
 EMERALD_TOP = "#0F543B"
@@ -184,8 +190,8 @@ def draw_icon(spec: dict) -> Image.Image:
     if spec.get("ring"):
         # Кольцо рисуем маской (внешний круг минус внутренний): outline у PIL
         # на больших радиусах оставляет разрывы.
-        radius = size * MARK_FRACTION / 2
-        width = size * 0.018
+        radius = size * RING_OUTER_FRACTION / 2
+        width = size * RING_WIDTH_FRACTION
         annulus = Image.new("L", (size, size), 0)
         ring_draw = ImageDraw.Draw(annulus)
         ring_draw.ellipse(
@@ -203,16 +209,20 @@ def draw_icon(spec: dict) -> Image.Image:
     return canvas.resize((SIZE, SIZE), Image.LANCZOS)
 
 
-def circle_masked(icon: Image.Image) -> Image.Image:
-    """Круглая маска лончера; углы прозрачные, чтобы лист не белел."""
+def launcher_crop(icon: Image.Image) -> Image.Image:
+    """Иконка глазами лончера: центральные 72 dp из 108 dp, обрезанные кругом.
+
+    Раньше здесь была маска почти на весь кадр (108 dp), поэтому превью выглядели
+    крупнее и «полнее», чем на рабочем столе: маска лончера всегда 72 dp.
+    """
     size = icon.size[0]
-    mask = Image.new("L", (size, size), 0)
-    ImageDraw.Draw(mask).ellipse(
-        (size * 0.01, size * 0.01, size * 0.99, size * 0.99), fill=255
-    )
-    result = icon.convert("RGBA")
-    result.putalpha(mask)
-    return result
+    side = int(round(size * VISIBLE_FRACTION))
+    left = (size - side) // 2
+    square = icon.convert("RGBA").crop((left, left, left + side, left + side))
+    mask = Image.new("L", (side, side), 0)
+    ImageDraw.Draw(mask).ellipse((0, 0, side - 1, side - 1), fill=255)
+    square.putalpha(mask)
+    return square
 
 
 def label(draw: ImageDraw.ImageDraw, xy: tuple[int, int], text: str, size: int, fill: str, font_name: str = "Manrope-500.ttf") -> None:
@@ -233,7 +243,7 @@ def build_sheet(icons: list[tuple[dict, Image.Image]], target: Path) -> None:
     label(
         draw,
         (pad, pad + 44),
-        "знак — диафрагма со сплэша, цвета сняты с него же",
+        "знак — диафрагма со сплэша; в кадре то, что видит лончер: 72 из 108 dp, круглая маска",
         22,
         "#9BA9A2",
     )
@@ -251,9 +261,9 @@ def build_sheet(icons: list[tuple[dict, Image.Image]], target: Path) -> None:
         row, col = divmod(index, cols)
         x = pad + col * (cell + gap)
         y = pad + header + row * (cell + 118 + gap)
-        shot = circle_masked(icon).resize((cell, cell), Image.LANCZOS)
+        shot = launcher_crop(icon).resize((cell, cell), Image.LANCZOS)
         sheet.paste(shot, (x, y), shot)
-        small = circle_masked(icon).resize((72, 72), Image.LANCZOS)
+        small = launcher_crop(icon).resize((72, 72), Image.LANCZOS)
         sheet.paste(small, (x + cell - 72, y + cell - 72), small)
         label(draw, (x, y + cell + 14), spec["slug"], 22, "#F4F1E8", "Manrope-700.ttf")
         label(draw, (x, y + cell + 46), spec["title"], 20, "#7FD8B0")
@@ -268,7 +278,8 @@ PARSE = parse_paths()
 def vector_xml(spec: dict) -> str:
     """Готовый adaptive-icon foreground: тот же контур в системе 108 dp.
 
-    Знак вписан в 72 dp из 108 dp — зону контента, которую маска лончера не срезает.
+    Знак 56 dp из 108 dp: лончер показывает центральные 72 dp и режет их маской,
+    поэтому вокруг знака остаётся ободок фона и он не упирается в край.
     """
     dp = 108
     fraction = RING_MARK_FRACTION if spec.get("ring") else MARK_FRACTION
@@ -282,18 +293,17 @@ def vector_xml(spec: dict) -> str:
 
     ring = ""
     if spec.get("ring"):
-        radius = dp * MARK_FRACTION / 2
-        inner = radius - dp * 0.018
+        radius = dp * RING_OUTER_FRACTION / 2
         ring = (
             f'\n    <path\n        android:fillColor="{spec["mark"]}"\n'
             f'        android:pathData="M{dp / 2 - radius:.2f},{dp / 2:.2f} '
             f'a{radius:.2f},{radius:.2f} 0 1,1 {2 * radius:.2f},0 '
             f'a{radius:.2f},{radius:.2f} 0 1,1 {-2 * radius:.2f},0 Z '
-            f'M{dp / 2 - radius + dp * 0.018:.2f},{dp / 2:.2f} '
-            f'a{radius - dp * 0.018:.2f},{radius - dp * 0.018:.2f} 0 1,0 '
-            f'{2 * (radius - dp * 0.018):.2f},0 '
-            f'a{radius - dp * 0.018:.2f},{radius - dp * 0.018:.2f} 0 1,0 '
-            f'{-2 * (radius - dp * 0.018):.2f},0 Z"\n        android:fillType="evenOdd" />'
+            f'M{dp / 2 - radius + dp * RING_WIDTH_FRACTION:.2f},{dp / 2:.2f} '
+            f'a{radius - dp * RING_WIDTH_FRACTION:.2f},{radius - dp * RING_WIDTH_FRACTION:.2f} 0 1,0 '
+            f'{2 * (radius - dp * RING_WIDTH_FRACTION):.2f},0 '
+            f'a{radius - dp * RING_WIDTH_FRACTION:.2f},{radius - dp * RING_WIDTH_FRACTION:.2f} 0 1,0 '
+            f'{-2 * (radius - dp * RING_WIDTH_FRACTION):.2f},0 Z"\n        android:fillType="evenOdd" />'
         )
 
     return f"""<?xml version="1.0" encoding="utf-8"?>
@@ -472,8 +482,8 @@ def main() -> None:
         folder.mkdir(exist_ok=True)
         icon = draw_icon(spec)
         icon.save(folder / "icon-1024.png")
-        circle_masked(icon).save(folder / "icon-circle.png")
-        circle_masked(icon).resize((192, 192), Image.LANCZOS).save(folder / "icon-48dp.png")
+        launcher_crop(icon).save(folder / "icon-circle.png")
+        launcher_crop(icon).resize((192, 192), Image.LANCZOS).save(folder / "icon-48dp.png")
         write_resources(spec, folder)
         built.append((spec, icon))
         print(f"{folder.name}: {spec['title']}")
