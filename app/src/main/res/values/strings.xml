@@ -320,7 +320,7 @@
     <string name="settings_group_data">Данные</string>
     <string name="settings_group_about">О приложении</string>
     <string name="settings_push_enabled_hint">Каждый день в %1$02d:00</string>
-    <string name="settings_about_version">Версия 0.2.1</string>
+    <string name="settings_about_version">Версия 0.2.2</string>
     <string name="settings_about_note">Дневник питания с разбором фотографий</string>
     <string name="stats_metric_meals">приёмов пищи</string>
     <string name="stats_metric_edited">исправлено</string>

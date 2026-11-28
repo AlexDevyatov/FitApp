@@ -27,10 +27,10 @@ android {
         applicationId = "ru.fitapp"
         minSdk = 26
         targetSdk = 36
-        // 6 — следующий номер после последней CI-сборки: локальная сборка должна
+        // 7 — следующий номер после последней CI-сборки: локальная сборка должна
         // ставиться поверх неё, иначе установщик видит понижение версии.
-        versionCode = versionCodeOverride ?: 6
-        versionName = versionNameOverride ?: "0.2.1"
+        versionCode = versionCodeOverride ?: 7
+        versionName = versionNameOverride ?: "0.2.2"
     }
 
     signingConfigs {
